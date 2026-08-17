@@ -129,6 +129,34 @@ export function DataOps({ categories }: { categories: CategoryOption[] }) {
     }
   }, [selected, refresh, drain]);
 
+  /**
+   * Enrichment without ingestion.
+   *
+   * Ingesting stores businesses and scores what is known about them, but a
+   * prospect whose website has never been crawled is scored as if it had no
+   * web presence at all. This fixes that for data already in the database,
+   * without re-fetching it from the source.
+   */
+  const runPipeline = useCallback(async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/admin/pipeline', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ limit: 500 }),
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body?.error?.message ?? 'Could not queue the pipeline');
+      await refresh();
+      void drain();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not queue the pipeline');
+    } finally {
+      setBusy(false);
+    }
+  }, [refresh, drain]);
+
   const toggle = (key: string) =>
     setSelected((current) =>
       current.includes(key) ? current.filter((k) => k !== key) : [...current, key],
@@ -192,6 +220,15 @@ export function DataOps({ categories }: { categories: CategoryOption[] }) {
             className="rounded-lg bg-accent px-5 py-2.5 text-[13px] font-semibold text-[#05202e] transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             {busy ? 'Queueing…' : `Fetch ${selected.length} sector${selected.length === 1 ? '' : 's'}`}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => void runPipeline()}
+            disabled={busy || running}
+            className="rounded-lg border border-line-strong px-5 py-2.5 text-[13px] font-medium transition-colors hover:border-accent disabled:opacity-50"
+          >
+            Audit websites &amp; rescore
           </button>
 
           {pending > 0 && !running ? (
