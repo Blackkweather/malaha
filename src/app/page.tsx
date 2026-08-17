@@ -1,6 +1,16 @@
 import { SearchPanel } from '@/components/SearchPanel';
+import { CATEGORIES } from '@/lib/normalize/category';
 
 export const dynamic = 'force-dynamic';
+
+/**
+ * Built on the server so the whole taxonomy never reaches the browser bundle.
+ * Excluded categories are omitted because the quality filter drops them before
+ * ranking — offering a filter that can only ever return nothing is a lie.
+ */
+const SECTORS = CATEGORIES.filter((c) => !c.excluded)
+  .map((c) => ({ key: c.key, label: c.label }))
+  .sort((a, b) => a.label.localeCompare(b.label));
 
 export default function SearchPage() {
   return (
@@ -12,7 +22,7 @@ export default function SearchPage() {
           reviewed, commercially valuable, and with visible website upside.
         </p>
       </div>
-      <SearchPanel />
+      <SearchPanel categories={SECTORS} />
     </div>
   );
 }

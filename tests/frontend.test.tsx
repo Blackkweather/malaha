@@ -25,6 +25,9 @@ const STRONG = {
   websiteDomain: 'dentallarios.example',
   websiteVerdict: 'weak mobile experience',
   opportunity: 93,
+  businessQuality: 96,
+  commercialValue: 96,
+  digitalOpportunity: 88,
   reasons: [
     'Exceptional public review volume (847 reviews)',
     'Dental clinic is a high-value category',

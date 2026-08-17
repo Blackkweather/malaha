@@ -12,6 +12,10 @@ export interface ResultCardData {
   websiteDomain: string | null;
   websiteVerdict: string | null;
   opportunity: number;
+  /** The three components behind `opportunity`, so the list can be reranked by any of them. */
+  businessQuality: number;
+  commercialValue: number;
+  digitalOpportunity: number;
   reasons: string[];
 }
 
