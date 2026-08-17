@@ -57,9 +57,20 @@ export const config = {
 
   db: {
     url: str('DATABASE_URL', 'postgres://prospect:prospect@localhost:5544/prospect_finder'),
-    poolMax: num('PGPOOL_MAX', 10),
+    /*
+     * Sized for a hosted database, not a local socket. The detail view issues
+     * nine queries concurrently, so a pool of ten sits exactly at the limit
+     * and any other in-flight work waits for a connection.
+     */
+    poolMax: num('PGPOOL_MAX', 12),
     idleTimeoutMs: num('PGPOOL_IDLE_TIMEOUT_MS', 30000),
-    connectionTimeoutMs: num('PGPOOL_CONNECTION_TIMEOUT_MS', 5000),
+    /*
+     * Five seconds was a localhost assumption. A managed Postgres that has
+     * scaled to zero must wake before it can accept a connection, and the TLS
+     * handshake over the network is not free either; the old default turned an
+     * ordinary cold start into a 500.
+     */
+    connectionTimeoutMs: num('PGPOOL_CONNECTION_TIMEOUT_MS', 15000),
   },
 
   auth: {

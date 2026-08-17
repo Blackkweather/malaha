@@ -22,14 +22,30 @@ export function buildOutreachEvidence(detail: BusinessDetail): OutreachEvidence 
     null,
   );
 
+  const hasWebsite = detail.business.website_url !== null;
+  const issueCodes = detail.issues.map((i) => i.code);
+
+  /*
+   * A business with no website has no audit, and therefore no rows in
+   * website_issues — so the findings list comes back empty and looks exactly
+   * like a site that was audited and passed. That is a fact we hold, not one
+   * we have to infer, so state it explicitly rather than letting an absence of
+   * evidence read as evidence of absence.
+   */
+  if (!hasWebsite && issueCodes.length === 0) {
+    issueCodes.push(detail.socials.length > 0 ? 'social_only_presence' : 'no_website');
+  }
+
   return {
     name: detail.business.name,
     category: detail.business.category,
     city: detail.business.city ?? config.geo.city,
-    hasWebsite: detail.business.website_url !== null,
+    hasWebsite,
     websiteUrl: detail.business.website_url,
     domain: detail.business.domain,
-    issueCodes: detail.issues.map((i) => i.code),
+    issueCodes,
+    // No website is a complete picture; a website nobody has crawled is not.
+    audited: !hasWebsite || detail.audit !== null,
     rating: best?.rating ?? null,
     reviewCount: best?.review_count ?? null,
     opportunity: detail.score?.opportunity ?? null,
@@ -70,6 +86,7 @@ function buildUserPrompt(
         hasWebsite: evidence.hasWebsite,
         publicRating: evidence.rating,
         publicReviewCount: evidence.reviewCount,
+        websiteHasBeenAudited: evidence.audited,
         auditFindings: findings,
         allObservedIssueCodes: evidence.issueCodes,
       },
@@ -77,6 +94,14 @@ function buildUserPrompt(
       2,
     ),
     '',
+    ...(evidence.audited
+      ? []
+      : [
+          'The website has NOT been audited. You know nothing about its quality.',
+          'Do not praise it, do not criticise it, do not describe it at all.',
+          'Offer to review it instead.',
+          '',
+        ]),
     `LEAD ANGLE: ${angle}`,
     `CHANNEL: ${options.channel}`,
     `LANGUAGE: ${options.language === 'es' ? 'Spanish (Spain)' : 'English'}`,

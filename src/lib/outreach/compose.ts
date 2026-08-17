@@ -28,6 +28,14 @@ export interface OutreachEvidence {
   domain: string | null;
   /** Audit findings, strongest first. */
   issueCodes: string[];
+  /**
+   * Whether this prospect's website has actually been audited.
+   *
+   * Without this, "no findings" is ambiguous: it could mean a clean site, or a
+   * site nobody has looked at yet. Treating the second as the first is how a
+   * message ends up praising a website that does not exist.
+   */
+  audited: boolean;
   rating: number | null;
   reviewCount: number | null;
   opportunity: number | null;
@@ -48,7 +56,8 @@ export type OutreachAngle =
   | 'performance'
   | 'modernity'
   | 'seo'
-  | 'polish';
+  | 'polish'
+  | 'unaudited';
 
 interface AngleRule {
   angle: OutreachAngle;
@@ -85,8 +94,19 @@ export function pickAngle(evidence: OutreachEvidence): AngleSelection {
     if (matched.length > 0) return { angle: rule.angle, supportingCodes: matched };
   }
 
-  // A site with no catalogued failings is a refinement conversation, not a
-  // rescue one. Saying otherwise would be the invented-detail failure mode.
+  /*
+   * No findings means one of two very different things, and the difference
+   * matters more than any other decision in this file.
+   *
+   * If the site was audited and came back clean, this is a refinement
+   * conversation. If it was never audited, we know nothing about it — and
+   * claiming it is "in good technical shape" would be inventing the single
+   * fact the whole message rests on. That is not a hypothetical: a prospect
+   * with no website at all reached this branch in production and was told its
+   * website was in good shape.
+   */
+  if (!evidence.audited) return { angle: 'unaudited', supportingCodes: [] };
+
   return { angle: 'polish', supportingCodes: [] };
 }
 
@@ -155,6 +175,14 @@ const COPY_ES: Record<OutreachAngle, AngleCopy> = {
     proposal: 'trabajar el diseño y los textos para que la visita interesada acabe contactando',
     subject: '{name}: una idea para que vuestra web convierta más',
   },
+  // Says nothing about the site, because nothing is known about it yet.
+  unaudited: {
+    observation: 'estoy revisando cómo se presentan online los negocios como el vuestro en {city}',
+    consequence:
+      'aún no he analizado vuestra web en detalle, así que no voy a deciros qué le falta sin haberlo comprobado',
+    proposal: 'un análisis concreto de vuestra web y qué cambiaría, sin coste',
+    subject: '{name}: ¿os interesa un análisis de vuestra web?',
+  },
 };
 
 const COPY_EN: Record<OutreachAngle, AngleCopy> = {
@@ -214,6 +242,14 @@ const COPY_EN: Record<OutreachAngle, AngleCopy> = {
     consequence: 'which is exactly why the next gain is not repair, it is conversion',
     proposal: 'working on the design and copy so interested visitors actually get in touch',
     subject: '{name}: an idea to make your website convert better',
+  },
+  // Says nothing about the site, because nothing is known about it yet.
+  unaudited: {
+    observation: 'I have been looking at how businesses like yours present themselves online in {city}',
+    consequence:
+      'I have not reviewed your website in detail yet, so I am not going to tell you what is wrong with it without having checked',
+    proposal: 'a specific review of your site and what I would change, at no cost',
+    subject: '{name}: would a review of your website be useful?',
   },
 };
 

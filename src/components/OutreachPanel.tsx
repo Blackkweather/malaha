@@ -32,6 +32,7 @@ const ANGLE_LABELS: Record<string, string> = {
   modernity: 'Dated site',
   seo: 'Search visibility',
   polish: 'Conversion polish',
+  unaudited: 'Not audited yet',
 };
 
 /**
@@ -204,7 +205,9 @@ export function OutreachPanel({ businessId }: { businessId: string }) {
             </p>
           ) : (
             <p className="mt-3 border-t border-line pt-3 font-mono text-[10px] text-ink-dim">
-              no website failings found — this is a conversion pitch, not a rescue pitch
+              {latest.angle === 'unaudited'
+                ? 'this site has not been audited yet, so the message claims nothing about it — run the audit for a sharper pitch'
+                : 'no website failings found — this is a conversion pitch, not a rescue pitch'}
             </p>
           )}
         </article>

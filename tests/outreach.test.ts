@@ -15,6 +15,7 @@ function evidence(overrides: Partial<OutreachEvidence> = {}): OutreachEvidence {
     websiteUrl: 'https://ejemplo.es',
     domain: 'ejemplo.es',
     issueCodes: [],
+    audited: true,
     rating: null,
     reviewCount: null,
     opportunity: 70,
@@ -52,10 +53,20 @@ describe('outreach angle selection', () => {
     expect(selection.supportingCodes).not.toContain('missing_canonical');
   });
 
-  it('falls back to a conversion angle when the site has no catalogued failings', () => {
-    const selection = pickAngle(evidence({ issueCodes: [] }));
+  it('falls back to a conversion angle when an audited site has no failings', () => {
+    const selection = pickAngle(evidence({ issueCodes: [], audited: true }));
     expect(selection.angle).toBe('polish');
     expect(selection.supportingCodes).toEqual([]);
+  });
+
+  /*
+   * Regression. A prospect with no website produces no audit and therefore no
+   * findings, which used to be indistinguishable from a clean audit — and a
+   * real prospect was told its (non-existent) website was in good shape.
+   */
+  it('does not treat an unaudited site as a clean one', () => {
+    const selection = pickAngle(evidence({ issueCodes: [], audited: false }));
+    expect(selection.angle).toBe('unaudited');
   });
 });
 
@@ -69,6 +80,17 @@ describe('outreach copy is grounded in the evidence', () => {
     for (const forbidden of ['not adapted for mobile', 'not served over HTTPS', 'does not respond']) {
       expect(message.body).not.toContain(forbidden);
     }
+  });
+
+  it('never praises a website it has not looked at', () => {
+    const e = evidence({ issueCodes: [], audited: false });
+    const es = composeMessage(e, pickAngle(e), { language: 'es', channel: 'email' });
+    const en = composeMessage(e, pickAngle(e), { language: 'en', channel: 'email' });
+
+    expect(es.body).not.toContain('buen estado técnico');
+    expect(en.body).not.toContain('good technical shape');
+    // It should say plainly that it has not checked, and offer to.
+    expect(en.body).toContain('not going to tell you what is wrong');
   });
 
   it('cites the observed findings and nothing else', () => {
