@@ -330,7 +330,7 @@ The load-bearing guarantees:
 | Search stays Málaga-only | `tests/search.test.ts`, `tests/geo.test.ts` |
 | Weak businesses never displace stronger ones | `tests/opportunity.test.ts` |
 | Results are never padded | `tests/search.test.ts` |
-| Search stays under 500 ms | `tests/search.test.ts` |
+| Search costs about one database round trip | `tests/search.test.ts` |
 
 ---
 
