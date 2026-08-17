@@ -279,7 +279,8 @@ skipped the build step still repairs itself.
 | `API_TOKENS` | Required for programmatic writes to a public deployment |
 | `GROQ_API_KEY` | Optional: model-written outreach and classification |
 
-The cron in `vercel.json` runs every six hours and is deliberately incremental
+The cron in `vercel.json` runs daily (the most a Vercel Hobby account allows;
+raise the frequency on Pro) and is deliberately incremental
 — it re-audits only sites whose audit has aged past `REFRESH_STALE_AFTER_DAYS`
 (default 14). Re-crawling every site in Málaga on every tick would be wasteful
 and impolite to those servers.
