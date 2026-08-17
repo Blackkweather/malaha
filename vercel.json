@@ -1,0 +1,17 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "regions": ["fra1"],
+  "crons": [
+    {
+      "path": "/api/cron/refresh",
+      "schedule": "0 */6 * * *"
+    }
+  ],
+  "functions": {
+    "src/app/api/admin/run/route.ts": { "maxDuration": 300 },
+    "src/app/api/cron/refresh/route.ts": { "maxDuration": 300 },
+    "src/app/api/import/route.ts": { "maxDuration": 300 },
+    "src/app/api/prospects/[id]/deep-analyze/route.ts": { "maxDuration": 300 }
+  }
+}

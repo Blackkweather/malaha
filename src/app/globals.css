@@ -1,0 +1,66 @@
+@import 'tailwindcss';
+
+/*
+ * Dark, premium, minimal. The palette is deliberately narrow: a near-black
+ * ground, two elevated surfaces, one accent. Nothing decorative competes with
+ * the data.
+ */
+@theme {
+  --color-ground: #07090c;
+  --color-surface: #0d1117;
+  --color-surface-2: #131a23;
+  --color-line: #1e2732;
+  --color-line-strong: #2b3746;
+  --color-ink: #e9eef4;
+  --color-ink-muted: #8b98a8;
+  --color-ink-dim: #5d6a7a;
+  --color-accent: #4cc2ff;
+  --color-accent-dim: #1b3a4d;
+  --color-positive: #3ddc97;
+  --color-warn: #ffb020;
+  --color-danger: #ff6b6b;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+}
+
+html,
+body {
+  background: var(--color-ground);
+  color: var(--color-ink);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: #05202e;
+}
+
+/* Scrollbars tuned to the dark ground so they do not flash white. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-strong) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-line-strong);
+  border-radius: 999px;
+  border: 3px solid var(--color-ground);
+}
+
+@keyframes shimmer {
+  0% { opacity: 0.45; }
+  50% { opacity: 1; }
+  100% { opacity: 0.45; }
+}
+.pulse-soft {
+  animation: shimmer 1.6s ease-in-out infinite;
+}

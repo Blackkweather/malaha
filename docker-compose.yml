@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: malaga_prospect_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: prospect
+      POSTGRES_PASSWORD: prospect
+      POSTGRES_DB: prospect_finder
+    ports:
+      - '5544:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U prospect -d prospect_finder']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  pgdata:

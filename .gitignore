@@ -1,0 +1,31 @@
+node_modules/
+.next/
+out/
+build/
+dist/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# Secrets — never commit
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Runtime artifacts
+.pgdata/
+logs/
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+.vercel
+.env*
+# ...but the annotated template must be committed, or a fresh clone has
+# nothing to copy from.
+!.env.example

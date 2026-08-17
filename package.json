@@ -1,0 +1,44 @@
+{
+  "name": "malaga-prospect-finder",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Finds the strongest potential website/design clients in Malaga, Spain.",
+  "type": "module",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "vercel-build": "tsx scripts/migrate.ts --if-configured && next build",
+    "start": "next start -p 3000",
+    "lint": "tsc --noEmit",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "db:reset": "tsx scripts/migrate.ts --reset",
+    "ingest": "tsx scripts/ingest.ts",
+    "pipeline": "tsx scripts/pipeline.ts",
+    "worker": "tsx scripts/worker.ts",
+    "bootstrap": "tsx scripts/bootstrap.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "next": "15.5.4",
+    "pg": "8.13.1",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "zod": "3.24.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.1.13",
+    "@types/node": "22.10.5",
+    "@types/pg": "8.11.10",
+    "@types/react": "19.1.0",
+    "@types/react-dom": "19.1.0",
+    "dotenv": "16.4.7",
+    "tailwindcss": "4.1.13",
+    "tsx": "4.19.2",
+    "typescript": "5.7.3",
+    "vitest": "3.0.5"
+  }
+}
