@@ -253,6 +253,44 @@ const COPY_EN: Record<OutreachAngle, AngleCopy> = {
   },
 };
 
+/**
+ * Spanish sector names, in the plural form the copy uses ("diseño web de
+ * clínicas dentales"). The taxonomy labels are English, and leaving them
+ * untranslated produced "el diseño web de dental clinic en Málaga" — the first
+ * line of every Spanish message, and an immediate tell that it was machine
+ * written. Unmapped keys fall back to the English label.
+ */
+const CATEGORY_LABEL_ES: Record<string, string> = {
+  dental_clinic: 'clínicas dentales',
+  cosmetic_surgery: 'clínicas de estética y cirugía',
+  private_clinic: 'clínicas privadas',
+  law_firm: 'despachos de abogados',
+  real_estate: 'inmobiliarias',
+  hotel: 'hoteles y alojamientos',
+  yacht_charter: 'empresas de alquiler náutico',
+  wedding_events: 'empresas de bodas y eventos',
+  private_education: 'academias y centros de formación',
+  physiotherapy: 'clínicas de fisioterapia',
+  veterinary: 'clínicas veterinarias',
+  architecture: 'estudios de arquitectura e interiorismo',
+  professional_services: 'asesorías y despachos profesionales',
+  construction: 'empresas de construcción',
+  home_services: 'empresas de reformas y servicios para el hogar',
+  car_dealer: 'concesionarios y talleres',
+  jewellery: 'joyerías',
+  optician: 'ópticas',
+  fitness: 'gimnasios y centros deportivos',
+  spa_wellness: 'spas y centros de bienestar',
+  travel_agency: 'agencias de viajes',
+  restaurant: 'restaurantes',
+  beauty: 'peluquerías y centros de belleza',
+  pharmacy: 'farmacias',
+  pet_services: 'tiendas y servicios para mascotas',
+  retail: 'comercios',
+  cafe_bar: 'cafeterías y bares',
+  grocery: 'tiendas de alimentación',
+};
+
 function fill(template: string, evidence: OutreachEvidence): string {
   return template
     .replaceAll('{name}', evidence.name)
@@ -336,7 +374,14 @@ export function composeMessage(
   const { language, channel } = options;
   const copy = (language === 'es' ? COPY_ES : COPY_EN)[selection.angle];
   const sender = options.senderName ?? (language === 'es' ? '[tu nombre]' : '[your name]');
-  const categoryLabel = (CATEGORY_BY_KEY.get(evidence.category)?.label ?? evidence.category).toLowerCase();
+  const rawLabel = (CATEGORY_BY_KEY.get(evidence.category)?.label ?? evidence.category).toLowerCase();
+  // The copy reads "websites for <sector>", so the sector has to be plural.
+  // Labels containing a slash ("cosmetic surgery / aesthetic medicine") are
+  // left alone rather than pluralised into nonsense.
+  const englishLabel =
+    rawLabel.endsWith('s') || rawLabel.includes('/') ? rawLabel : `${rawLabel}s`;
+  const categoryLabel =
+    language === 'es' ? (CATEGORY_LABEL_ES[evidence.category] ?? englishLabel) : englishLabel;
 
   const subject = fill(copy.subject, evidence);
   const observation = fill(copy.observation, evidence);
