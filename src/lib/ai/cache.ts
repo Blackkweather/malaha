@@ -179,8 +179,17 @@ export async function recordUsage(record: UsageRecord): Promise<void> {
   }
 }
 
-/** Published per-million-token prices used for cost estimation. */
+/**
+ * Published per-million-token prices used for cost estimation.
+ *
+ * An unpriced model is not an error — `estimateCost` returns null and the cost
+ * is reported as unknown rather than guessed. The retired Llama entries are
+ * kept so historical usage rows still resolve to the price actually paid.
+ */
 export const MODEL_PRICING: Record<string, { input: number; output: number }> = {
+  'openai/gpt-oss-120b': { input: 0.15, output: 0.6 },
+  'openai/gpt-oss-20b': { input: 0.075, output: 0.3 },
+  // Retired by Groq — retained so historical usage records still price.
   'llama-3.3-70b-versatile': { input: 0.59, output: 0.79 },
   'llama-3.1-8b-instant': { input: 0.05, output: 0.08 },
   'claude-sonnet-4-5': { input: 3, output: 15 },

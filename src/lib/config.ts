@@ -124,7 +124,13 @@ export const config = {
   ai: {
     groq: {
       apiKey: str('GROQ_API_KEY', ''),
-      model: str('GROQ_MODEL', 'llama-3.3-70b-versatile'),
+      /*
+       * Groq retired the Llama models; llama-3.3-70b-versatile now answers
+       * 404 model_not_found and no llama build is offered any more. This one
+       * is verified to honour response_format json_object, which both the
+       * classifier and the outreach writer depend on.
+       */
+      model: str('GROQ_MODEL', 'openai/gpt-oss-120b'),
       maxCandidates: num('GROQ_MAX_CANDIDATES', 100),
       promptVersion: 2,
     },

@@ -6,7 +6,7 @@ const BASE_KEY = {
   businessId: 'b1',
   provider: 'groq' as const,
   stage: 'classification',
-  model: 'llama-3.3-70b-versatile',
+  model: 'openai/gpt-oss-120b',
   promptVersion: 2,
   auditVersion: 3,
   contentHash: 'abc',
