@@ -29,22 +29,23 @@ export function safeHref(value: string | null | undefined): string {
 function palette(theme: DemoTheme): Record<string, string> {
   return theme.mode === 'dark'
     ? {
-        bg: '#0c0a09',
-        surface: '#1c1917',
-        surface2: '#292524',
-        text: '#fafaf9',
-        muted: '#a8a29e',
-        border: '#292524',
+        bg: '#0b0a09',
+        surface: '#17150f',
+        surface2: '#221f18',
+        text: '#f7f4ee',
+        muted: '#a49b8f',
+        border: '#2a251d',
         onAccent: '#0c0a09',
         shadow: '0 1px 2px rgba(0,0,0,.4), 0 8px 24px -8px rgba(0,0,0,.6)',
       }
     : {
-        bg: '#ffffff',
-        surface: '#f8fafc',
-        surface2: '#f1f5f9',
-        text: '#0f172a',
-        muted: '#64748b',
-        border: '#e2e8f0',
+        // Off-white rather than #fff, ink rather than slate: paper, not UI.
+        bg: '#faf9f7',
+        surface: '#f4f2ee',
+        surface2: '#eeebe4',
+        text: '#14110f',
+        muted: '#6b625b',
+        border: '#e3ded4',
         onAccent: '#ffffff',
         shadow: '0 1px 2px rgba(15,23,42,.04), 0 12px 32px -12px rgba(15,23,42,.18)',
       };
@@ -73,6 +74,7 @@ export function renderStyles(accent: string, theme?: DemoTheme): string {
       --shadow: ${c.shadow};
       --heading: ${heading};
       --body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
@@ -128,13 +130,12 @@ export function renderStyles(accent: string, theme?: DemoTheme): string {
     }
     .hero-grid { display: grid; gap: 44px; grid-template-columns: 1fr; align-items: center; }
     .eyebrow {
-      display: inline-flex; align-items: center; gap: 8px; font-size: .74rem; letter-spacing: .13em;
-      text-transform: uppercase; color: var(--accent); font-weight: 650;
-      background: color-mix(in srgb, var(--accent) 10%, transparent);
-      border: 1px solid color-mix(in srgb, var(--accent) 26%, transparent);
-      border-radius: 999px; padding: 7px 15px;
+      display: inline-flex; align-items: center; gap: 10px; font-family: var(--mono);
+      font-size: .72rem; letter-spacing: .16em; text-transform: uppercase;
+      color: var(--muted); font-weight: 500;
     }
-    h1 { font-size: clamp(2.7rem, 8vw, 5.4rem); line-height: .98; margin: 26px 0 22px; font-weight: 700; }
+    .eyebrow::before { content: ""; width: 26px; height: 1px; background: var(--accent); }
+    h1 { font-size: clamp(2.7rem, 8vw, 5.6rem); line-height: .96; margin: 30px 0 26px; font-weight: 600; letter-spacing: -.035em; }
     .lede { color: var(--muted); font-size: clamp(1.02rem, 2.2vw, 1.18rem); max-width: 60ch; }
     .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
     .hero-meta { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 30px; color: var(--muted); font-size: .88rem; }
@@ -142,7 +143,7 @@ export function renderStyles(accent: string, theme?: DemoTheme): string {
 
     /* The hero card stands in for photography the business has not supplied. */
     .hero-card {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
       padding: 26px; box-shadow: var(--shadow); position: relative; overflow: hidden;
     }
     .hero-card::after {
@@ -163,11 +164,12 @@ export function renderStyles(accent: string, theme?: DemoTheme): string {
        a hairline rather than a box. */
     section { padding: clamp(72px, 11vw, 132px) 0; border-top: 1px solid var(--border); }
     .section-head { max-width: 62ch; margin-bottom: clamp(34px, 5vw, 56px); }
-    h2 { font-size: clamp(1.9rem, 4.6vw, 3.1rem); margin-bottom: 14px; font-weight: 700; line-height: 1.06; }
+    h2 { font-size: clamp(1.9rem, 4.6vw, 3.1rem); margin-bottom: 16px; font-weight: 600; line-height: 1.04; letter-spacing: -.03em; }
     .section-sub { color: var(--muted); font-size: clamp(1rem, 1.6vw, 1.1rem); }
     .section-index {
-      display: block; font-family: var(--body); font-size: .74rem; font-weight: 700;
-      letter-spacing: .18em; color: var(--accent); margin-bottom: 14px;
+      display: block; font-family: var(--mono); font-size: .72rem; font-weight: 500;
+      letter-spacing: .16em; color: var(--muted); margin-bottom: 18px;
+      padding-bottom: 14px; border-bottom: 1px solid var(--border);
     }
 
     /* Scroll reveal. Everything is visible by default so the page still
@@ -176,23 +178,26 @@ export function renderStyles(accent: string, theme?: DemoTheme): string {
     .js-reveal .reveal.in { opacity: 1; transform: none; }
 
     /* Closing call to action, set on the accent so the page ends on it. */
-    .cta-band { background: var(--accent); color: var(--on-accent); border-radius: 24px; padding: clamp(36px, 6vw, 68px); }
+    .cta-band { background: var(--accent); color: var(--on-accent); border-radius: 4px; padding: clamp(36px, 6vw, 68px); }
     .cta-band h2 { color: var(--on-accent); }
     .cta-band p { color: color-mix(in srgb, var(--on-accent) 82%, transparent); max-width: 52ch; }
     .cta-band .btn-ghost { border-color: color-mix(in srgb, var(--on-accent) 45%, transparent); color: var(--on-accent); background: transparent; }
 
     .stock-note { margin-top: 14px; font-size: .78rem; color: var(--muted); }
     .grid { display: grid; gap: 18px; grid-template-columns: 1fr; }
+    /* Whitespace does the work a border used to do. */
     .card {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 26px;
-      transition: transform .18s ease, box-shadow .18s ease;
+      background: transparent; border: 0; border-top: 1px solid var(--border);
+      border-radius: 0; padding: 26px 0 0; transition: opacity .2s ease;
     }
-    .card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+    .card:hover { opacity: .72; }
+    .card h3 { font-weight: 600; }
     .card h3 { font-size: 1.08rem; margin-bottom: 9px; }
     .card p { color: var(--muted); font-size: .95rem; }
+    /* A quiet numeral, not a coloured chip. */
     .card-icon {
-      width: 40px; height: 40px; border-radius: 11px; margin-bottom: 16px; display: grid; place-items: center;
-      background: color-mix(in srgb, var(--accent) 13%, transparent); color: var(--accent); font-weight: 700;
+      font-family: var(--mono); font-size: .74rem; letter-spacing: .12em; color: var(--muted);
+      margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--border);
     }
     .steps { counter-reset: step; display: grid; gap: 18px; grid-template-columns: 1fr; }
     .step { position: relative; padding-left: 60px; }
@@ -234,7 +239,7 @@ export function renderStyles(accent: string, theme?: DemoTheme): string {
     a.plain:hover { text-decoration: underline; }
 
     .map {
-      margin-top: 18px; border-radius: 14px; border: 1px solid var(--border); overflow: hidden;
+      margin-top: 18px; border-radius: 3px; border: 1px solid var(--border); overflow: hidden;
       background:
         linear-gradient(color-mix(in srgb, var(--accent) 7%, transparent), color-mix(in srgb, var(--accent) 7%, transparent)),
         repeating-linear-gradient(0deg, var(--surface-2) 0 1px, transparent 1px 34px),
@@ -254,11 +259,11 @@ export function renderStyles(accent: string, theme?: DemoTheme): string {
      * layout intact whatever shape arrives, and a tinted surface sits behind
      * every frame so a slow or dead image never leaves a white hole.
      */
-    .shot { position: relative; overflow: hidden; border-radius: 18px; background: var(--surface-2); border: 1px solid var(--border); }
+    .shot { position: relative; overflow: hidden; border-radius: 3px; background: var(--surface-2); border: 1px solid var(--border); }
     .shot img { display: block; width: 100%; height: 100%; object-fit: cover; }
     .shot-hero { aspect-ratio: 4 / 3; box-shadow: var(--shadow); }
     .shot-wide { aspect-ratio: 21 / 9; }
-    .shot-tile { aspect-ratio: 1 / 1; border-radius: 14px; }
+    .shot-tile { aspect-ratio: 1 / 1; border-radius: 3px; }
     .gallery { display: grid; gap: 14px; grid-template-columns: repeat(2, 1fr); }
     .logo-chip { height: 30px; width: auto; max-width: 132px; object-fit: contain; }
 
@@ -267,7 +272,7 @@ export function renderStyles(accent: string, theme?: DemoTheme): string {
     .hero-editorial h1 { font-size: clamp(2.6rem, 7vw, 4.6rem); }
 
     /* Showcase hero: the photograph leads and the copy sits over it. */
-    .hero-showcase { position: relative; border-radius: 22px; overflow: hidden; min-height: 460px; display: flex; align-items: flex-end; border: 1px solid var(--border); }
+    .hero-showcase { position: relative; border-radius: 4px; overflow: hidden; min-height: 460px; display: flex; align-items: flex-end; border: 1px solid var(--border); }
     .hero-showcase .shot-bg { position: absolute; inset: 0; }
     .hero-showcase .shot-bg img { width: 100%; height: 100%; object-fit: cover; }
     .hero-showcase .veil { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.15) 0%, rgba(0,0,0,.55) 55%, rgba(0,0,0,.82) 100%); }
