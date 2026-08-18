@@ -70,6 +70,8 @@ export interface DemoConcept {
  */
 export interface DemoMedia {
   hero: string | null;
+  /** True when the pictures are generic stock, not the business's own. */
+  isStock: boolean;
   logo: string | null;
   gallery: string[];
 }
@@ -286,6 +288,60 @@ const DEFAULT_THEME: DemoTheme = {
   heroStyle: 'split',
 };
 
+/**
+ * Search terms used to illustrate a sector when the business publishes no
+ * photographs of its own — which is the case for every prospect that has no
+ * website, and those are precisely the ones worth pitching.
+ */
+const STOCK_TERMS: Record<string, string> = {
+  dental_clinic: 'dentist,dental,clinic',
+  private_clinic: 'clinic,doctor,medical',
+  physiotherapy: 'physiotherapy,massage,rehabilitation',
+  veterinary: 'veterinary,vet,pet',
+  pharmacy: 'pharmacy,chemist',
+  cosmetic_surgery: 'aesthetic,clinic,skincare',
+  beauty: 'salon,hairdresser,beauty',
+  spa_wellness: 'spa,wellness,massage',
+  law_firm: 'law,office,lawyer',
+  professional_services: 'office,business,meeting',
+  architecture: 'architecture,interior,design',
+  real_estate: 'apartment,interior,property',
+  hotel: 'hotel,room,lobby',
+  restaurant: 'restaurant,food,dining',
+  cafe_bar: 'cafe,coffee,bar',
+  yacht_charter: 'yacht,boat,sea',
+  wedding_events: 'wedding,event,celebration',
+  fitness: 'gym,fitness,training',
+  private_education: 'classroom,students,school',
+  construction: 'construction,building,site',
+  home_services: 'renovation,tools,home',
+  car_dealer: 'car,showroom,automotive',
+  jewellery: 'jewelry,gold,ring',
+  optician: 'glasses,optician,eyewear',
+  travel_agency: 'travel,beach,holiday',
+  pet_services: 'pet,dog,grooming',
+  retail: 'shop,boutique,retail',
+};
+
+/**
+ * Deterministic stock imagery for a sector.
+ *
+ * `lock` pins the photograph to a seed, so regenerating a concept for the
+ * same business returns the same pictures instead of reshuffling the page
+ * every time it is opened. These are clearly generic images standing in for
+ * photography the business has not published — the page never presents them
+ * as pictures of the business itself.
+ */
+function stockImages(categoryKey: string, seed: string, count: number): string[] {
+  const terms = STOCK_TERMS[categoryKey] ?? 'business,office';
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) hash = (hash * 31 + seed.charCodeAt(i)) % 100000;
+
+  return Array.from({ length: count }, (_, i) =>
+    `https://loremflickr.com/1200/900/${encodeURIComponent(terms)}?lock=${hash + i}`,
+  );
+}
+
 /** Spanish service sets per sector, used when the audit detected none. */
 const DEFAULT_SERVICES: Record<string, { title: string; description: string }[]> = {
   dental_clinic: [
@@ -437,6 +493,15 @@ export function buildConcept(detail: BusinessDetail, claude: ClaudeAnalysis | nu
   const crawledImages = Array.isArray(metrics.imageUrls) ? (metrics.imageUrls as string[]) : [];
   const gallery = [...new Set([ogImage, ...crawledImages].filter((u): u is string => typeof u === 'string'))];
 
+  /*
+   * A prospect with no website is the strongest kind of lead and also the one
+   * with no photographs at all. Showing it a blank concept undersells the
+   * pitch, so the sector is illustrated with clearly generic stock, labelled
+   * as such on the page.
+   */
+  const usingStock = gallery.length === 0;
+  const media = usingStock ? stockImages(category.key, detail.business.id, 5) : gallery;
+
   const phone = detail.business.primary_phone;
   const phoneFormatted = formatPhone(phone);
   const phoneDigits = phone ? phone.replace(/[^\d+]/g, '') : null;
@@ -480,9 +545,10 @@ export function buildConcept(detail: BusinessDetail, claude: ClaudeAnalysis | nu
     accent: theme.accent,
     theme,
     media: {
-      hero: gallery[0] ?? null,
+      hero: media[0] ?? null,
+      isStock: usingStock,
       logo: logoUrl,
-      gallery: gallery.slice(0, 6),
+      gallery: media.slice(0, 6),
     },
     services: servicesFromEvidence(detected, category.key),
     process: DEFAULT_PROCESS[category.key] ?? GENERIC_PROCESS,

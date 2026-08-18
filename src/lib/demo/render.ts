@@ -119,7 +119,7 @@ export function renderStyles(accent: string, theme?: DemoTheme): string {
     .btn-wa { background: #25d366; color: #05240f; }
 
     /* ---- hero ------------------------------------------------------------ */
-    .hero { position: relative; overflow: hidden; padding: 84px 0 72px; }
+    .hero { position: relative; overflow: hidden; padding: clamp(84px, 12vw, 150px) 0 clamp(72px, 10vw, 120px); }
     .hero::before {
       content: ""; position: absolute; inset: -40% -20% auto -20%; height: 130%; z-index: -1;
       background:
@@ -134,7 +134,7 @@ export function renderStyles(accent: string, theme?: DemoTheme): string {
       border: 1px solid color-mix(in srgb, var(--accent) 26%, transparent);
       border-radius: 999px; padding: 7px 15px;
     }
-    h1 { font-size: clamp(2.3rem, 6.4vw, 4rem); line-height: 1.04; margin: 22px 0 18px; font-weight: 700; }
+    h1 { font-size: clamp(2.7rem, 8vw, 5.4rem); line-height: .98; margin: 26px 0 22px; font-weight: 700; }
     .lede { color: var(--muted); font-size: clamp(1.02rem, 2.2vw, 1.18rem); max-width: 60ch; }
     .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
     .hero-meta { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 30px; color: var(--muted); font-size: .88rem; }
@@ -159,10 +159,29 @@ export function renderStyles(accent: string, theme?: DemoTheme): string {
     }
 
     /* ---- sections -------------------------------------------------------- */
-    section { padding: 72px 0; border-top: 1px solid var(--border); }
-    .section-head { max-width: 62ch; margin-bottom: 34px; }
-    h2 { font-size: clamp(1.55rem, 3.6vw, 2.3rem); margin-bottom: 10px; font-weight: 700; }
-    .section-sub { color: var(--muted); }
+    /* Whitespace does most of the work: sections breathe, and the border is
+       a hairline rather than a box. */
+    section { padding: clamp(72px, 11vw, 132px) 0; border-top: 1px solid var(--border); }
+    .section-head { max-width: 62ch; margin-bottom: clamp(34px, 5vw, 56px); }
+    h2 { font-size: clamp(1.9rem, 4.6vw, 3.1rem); margin-bottom: 14px; font-weight: 700; line-height: 1.06; }
+    .section-sub { color: var(--muted); font-size: clamp(1rem, 1.6vw, 1.1rem); }
+    .section-index {
+      display: block; font-family: var(--body); font-size: .74rem; font-weight: 700;
+      letter-spacing: .18em; color: var(--accent); margin-bottom: 14px;
+    }
+
+    /* Scroll reveal. Everything is visible by default so the page still
+       reads with JavaScript disabled; the script opts in to animating. */
+    .js-reveal .reveal { opacity: 0; transform: translateY(22px); transition: opacity .7s cubic-bezier(.2,.7,.3,1), transform .7s cubic-bezier(.2,.7,.3,1); }
+    .js-reveal .reveal.in { opacity: 1; transform: none; }
+
+    /* Closing call to action, set on the accent so the page ends on it. */
+    .cta-band { background: var(--accent); color: var(--on-accent); border-radius: 24px; padding: clamp(36px, 6vw, 68px); }
+    .cta-band h2 { color: var(--on-accent); }
+    .cta-band p { color: color-mix(in srgb, var(--on-accent) 82%, transparent); max-width: 52ch; }
+    .cta-band .btn-ghost { border-color: color-mix(in srgb, var(--on-accent) 45%, transparent); color: var(--on-accent); background: transparent; }
+
+    .stock-note { margin-top: 14px; font-size: .78rem; color: var(--muted); }
     .grid { display: grid; gap: 18px; grid-template-columns: 1fr; }
     .card {
       background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 26px;
@@ -365,7 +384,7 @@ function renderReviews(concept: DemoConcept): string {
   return `
   <section id="reviews">
     <div class="wrap">
-      <div class="section-head">
+      <div class="section-head reveal">
         <h2>Lo que dicen quienes ya han venido</h2>
         <p class="section-sub">Valoraciones públicas, mostradas tal y como están publicadas.</p>
       </div>
@@ -388,7 +407,7 @@ function renderFaqs(concept: DemoConcept): string {
   return `
   <section id="faq">
     <div class="wrap">
-      <div class="section-head">
+      <div class="section-head reveal">
         <h2>Preguntas frecuentes</h2>
         <p class="section-sub">Las dudas que más se repiten antes de la primera visita.</p>
       </div>
@@ -407,7 +426,7 @@ function renderLocation(concept: DemoConcept): string {
   return `
   <section id="location">
     <div class="wrap">
-      <div class="section-head">
+      <div class="section-head reveal">
         <h2>Dónde estamos</h2>
         <p class="section-sub">${escapeHtml(concept.location.city ?? 'Málaga')}</p>
       </div>
@@ -508,9 +527,13 @@ function renderGallery(concept: DemoConcept): string {
   return `
   <section id="gallery">
     <div class="wrap">
-      <div class="section-head">
-        <h2>El centro por dentro</h2>
-        <p class="section-sub">Imágenes publicadas por el propio negocio.</p>
+      <div class="section-head reveal">
+        <h2>${concept.media.isStock ? 'Así podría verse' : 'El centro por dentro'}</h2>
+        <p class="section-sub">${
+          concept.media.isStock
+            ? 'Imágenes de referencia que ocuparían el lugar de vuestras fotos reales.'
+            : 'Imágenes publicadas por el propio negocio.'
+        }</p>
       </div>
       <div class="gallery">${tiles.map((url, i) => shot(url, concept.businessName + ' — imagen ' + (i + 1), 'shot-tile')).join('')}</div>
     </div>
@@ -607,7 +630,8 @@ ${renderHero(concept, { whatsapp, heroMeta })}
 
   <section id="services">
     <div class="wrap">
-      <div class="section-head">
+      <div class="section-head reveal">
+        <span class="section-index">01 — Servicios</span>
         <h2>Qué hacemos</h2>
         <p class="section-sub">Servicios claros, para que en segundos sepas si estás en el sitio correcto.</p>
       </div>
@@ -619,7 +643,8 @@ ${renderGallery(concept)}
 
   <section id="process">
     <div class="wrap">
-      <div class="section-head">
+      <div class="section-head reveal">
+        <span class="section-index">02 — Proceso</span>
         <h2>Cómo trabajamos</h2>
         <p class="section-sub">Tres pasos, sin sorpresas por el camino.</p>
       </div>
@@ -629,7 +654,8 @@ ${renderGallery(concept)}
 
   <section id="trust">
     <div class="wrap">
-      <div class="section-head">
+      <div class="section-head reveal">
+        <span class="section-index">03 — Confianza</span>
         <h2>Por qué nos eligen</h2>
         <p class="section-sub">Datos tomados de información pública sobre este negocio.</p>
       </div>
@@ -645,7 +671,7 @@ ${renderGallery(concept)}
 
   <section id="contact">
     <div class="wrap">
-      <div class="section-head">
+      <div class="section-head reveal">
         <h2>Contacto</h2>
         <p class="section-sub">Un formulario corto y una llamada a un toque. Sin caminos sin salida.</p>
       </div>
@@ -669,12 +695,25 @@ ${renderGallery(concept)}
       <p class="notice">${escapeHtml(concept.sourceNote)}</p>
     </div>
   </section>
+  <section id="cierre">
+    <div class="wrap">
+      <div class="cta-band reveal">
+        <h2>¿Hablamos?</h2>
+        <p>Cuéntanos qué necesitas y te respondemos hoy mismo. Sin compromiso y sin letra pequeña.</p>
+        <div class="hero-actions">
+          <a class="btn btn-ghost" href="${safeHref(concept.primaryCta.href)}">${escapeHtml(concept.primaryCta.label)}</a>
+          ${whatsapp}
+        </div>
+      </div>
+    </div>
+  </section>
 </main>
 
 <footer>
   <div class="wrap">
     <p>${escapeHtml(concept.businessName)} — website concept, ${new Date().getFullYear()}.</p>
     <p style="margin-top:7px">Concepto de diseño elaborado para una propuesta comercial. Not the official website of this business.</p>
+    ${concept.media.isStock ? '<p class="stock-note">Las fotografías son imágenes de archivo de referencia, no del negocio.</p>' : ''}
   </div>
 </footer>
 
@@ -682,6 +721,21 @@ ${renderGallery(concept)}
   <a class="btn btn-primary" href="${safeHref(concept.primaryCta.href)}">${escapeHtml(concept.primaryCta.label)}</a>
   ${whatsapp || '<a class="btn btn-ghost" href="#contact">Mensaje</a>'}
 </div>
+<script>
+  // Progressive enhancement: the class is added by script, so nothing is
+  // hidden for a reader without JavaScript.
+  (function () {
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce || !("IntersectionObserver" in window)) return;
+    document.body.classList.add("js-reveal");
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
+      });
+    }, { rootMargin: "0px 0px -12% 0px" });
+    document.querySelectorAll(".reveal").forEach(function (el) { io.observe(el); });
+  })();
+</script>
 </body>
 </html>`;
 }
