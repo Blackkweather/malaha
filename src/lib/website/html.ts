@@ -23,6 +23,16 @@ export interface HtmlAnalysis {
   h1Count: number;
   imageCount: number;
   imagesWithAlt: number;
+  /**
+   * Imagery published by the business itself.
+   *
+   * A concept illustrated with the business's own photographs is far more
+   * persuasive than one dressed in stock, and these are already public on
+   * their own site. Absolute http(s) URLs only.
+   */
+  ogImage: string | null;
+  logoUrl: string | null;
+  imageUrls: string[];
   links: LinkInfo[];
   telLinks: string[];
   mailtoLinks: string[];
@@ -138,6 +148,7 @@ export function analyzeHtml(html: string, baseUrl: string): HtmlAnalysis {
   let hasViewportMeta = false;
   let viewportContent: string | null = null;
   let generator: string | null = null;
+  let ogImage: string | null = null;
 
   for (const tag of metaTags) {
     const name = (attr(tag, 'name') ?? attr(tag, 'property') ?? '').toLowerCase();
@@ -148,6 +159,11 @@ export function analyzeHtml(html: string, baseUrl: string): HtmlAnalysis {
       viewportContent = content;
     }
     if (name === 'generator' && content) generator = content;
+    // og:image is the business's own chosen hero shot, so it is preferred
+    // over anything scraped out of the body.
+    if ((name === 'og:image' || name === 'twitter:image') && content && ogImage === null) {
+      ogImage = content;
+    }
   }
 
   const canonicalTag = (html.match(/<link\b[^>]*>/gi) ?? []).find(
@@ -168,6 +184,45 @@ export function analyzeHtml(html: string, baseUrl: string): HtmlAnalysis {
     const alt = attr(tag, 'alt');
     return alt !== null && alt !== '';
   }).length;
+
+  /*
+   * Collect the imagery the site actually publishes.
+   *
+   * Only http(s) is accepted: a data: URI would bloat the stored record and
+   * anything else is not fetchable. Sprites, spacers, tracking pixels and
+   * icons are filtered by name because they are never usable as photography,
+   * and a concept built around a 1x1 pixel is worse than one with no picture.
+   */
+  const absolute = (value: string | null): string | null => {
+    if (!value) return null;
+    try {
+      const url = new URL(value, baseUrl);
+      return url.protocol === 'http:' || url.protocol === 'https:' ? url.toString() : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const JUNK_IMAGE =
+    /(sprite|spacer|pixel|1x1|blank|placeholder|loader|loading|icon-|[/]icons?[/]|badge|avatar|captcha|tracking)/i;
+
+  const imageUrls: string[] = [];
+  for (const tag of imgTags) {
+    const raw = attr(tag, 'src') ?? attr(tag, 'data-src') ?? attr(tag, 'data-lazy-src');
+    const url = absolute(raw);
+    if (!url) continue;
+    if (JUNK_IMAGE.test(url)) continue;
+    // Vector icons are not photography, whatever the query string says.
+    if (url.toLowerCase().split("?")[0].endsWith(".svg")) continue;
+    if (!imageUrls.includes(url)) imageUrls.push(url);
+    if (imageUrls.length >= 12) break;
+  }
+
+  const iconTag = (html.match(/<link[^>]*>/gi) ?? []).find((tag) => {
+    const rel = (attr(tag, 'rel') ?? '').toLowerCase();
+    return rel.includes('apple-touch-icon') || rel === 'icon' || rel === 'shortcut icon';
+  });
+  const logoUrl = iconTag ? absolute(attr(iconTag, 'href')) : null;
 
   const links: LinkInfo[] = [];
   for (const match of html.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/gi)) {
@@ -237,6 +292,9 @@ export function analyzeHtml(html: string, baseUrl: string): HtmlAnalysis {
     headings,
     h1Count: headings.filter((h) => h.level === 1).length,
     imageCount: imgTags.length,
+    ogImage: absolute(ogImage),
+    logoUrl,
+    imageUrls,
     imagesWithAlt,
     links,
     telLinks,

@@ -22,6 +22,8 @@ export interface DemoConcept {
   categoryLabel: string;
   accent: string;
   theme: DemoTheme;
+  /** Imagery, preferring photographs the business already publishes. */
+  media: DemoMedia;
   services: { title: string; description: string }[];
   process: { title: string; description: string }[];
   faqs: { question: string; answer: string }[];
@@ -56,42 +58,224 @@ export interface DemoConcept {
  * read clean and light, hospitality reads warm and dark, the professions read
  * authoritative with a serif.
  */
+/**
+ * Imagery for the concept.
+ *
+ * Sourced from the business's own website wherever possible: their real
+ * premises photographed by them beats any stock image, and it is already
+ * public. When the audit found nothing usable the renderer falls back to
+ * generated artwork rather than an unrelated stock photo, because a dental
+ * clinic illustrated with somebody else's waiting room is a worse lie than
+ * no photograph at all.
+ */
+export interface DemoMedia {
+  hero: string | null;
+  logo: string | null;
+  gallery: string[];
+}
+
+/** Hero layout archetype, so sectors do not all share one composition. */
+export type HeroStyle = 'split' | 'showcase' | 'editorial';
+
 export interface DemoTheme {
   mode: 'light' | 'dark';
   accent: string;
   /** Tint used behind hero and section washes. */
   accentSoft: string;
   headingFont: 'sans' | 'serif';
+  heroStyle: HeroStyle;
 }
 
 const THEMES: Record<string, DemoTheme> = {
-  dental_clinic: { mode: 'light', accent: '#0284c7', accentSoft: '#e0f2fe', headingFont: 'sans' },
-  private_clinic: { mode: 'light', accent: '#0d9488', accentSoft: '#ccfbf1', headingFont: 'sans' },
-  physiotherapy: { mode: 'light', accent: '#059669', accentSoft: '#d1fae5', headingFont: 'sans' },
-  veterinary: { mode: 'light', accent: '#0891b2', accentSoft: '#cffafe', headingFont: 'sans' },
-  pharmacy: { mode: 'light', accent: '#16a34a', accentSoft: '#dcfce7', headingFont: 'sans' },
-  cosmetic_surgery: { mode: 'light', accent: '#be185d', accentSoft: '#fce7f3', headingFont: 'serif' },
-  beauty: { mode: 'light', accent: '#c026d3', accentSoft: '#fae8ff', headingFont: 'serif' },
-  spa_wellness: { mode: 'light', accent: '#9333ea', accentSoft: '#f3e8ff', headingFont: 'serif' },
-  law_firm: { mode: 'light', accent: '#1e40af', accentSoft: '#e0e7ff', headingFont: 'serif' },
-  professional_services: { mode: 'light', accent: '#3730a3', accentSoft: '#e0e7ff', headingFont: 'serif' },
-  architecture: { mode: 'light', accent: '#334155', accentSoft: '#e2e8f0', headingFont: 'serif' },
-  real_estate: { mode: 'light', accent: '#b45309', accentSoft: '#fef3c7', headingFont: 'serif' },
-  hotel: { mode: 'dark', accent: '#f59e0b', accentSoft: '#78350f', headingFont: 'serif' },
-  restaurant: { mode: 'dark', accent: '#f97316', accentSoft: '#7c2d12', headingFont: 'serif' },
-  cafe_bar: { mode: 'dark', accent: '#f59e0b', accentSoft: '#78350f', headingFont: 'serif' },
-  yacht_charter: { mode: 'dark', accent: '#22d3ee', accentSoft: '#164e63', headingFont: 'sans' },
-  wedding_events: { mode: 'light', accent: '#db2777', accentSoft: '#fce7f3', headingFont: 'serif' },
-  fitness: { mode: 'dark', accent: '#84cc16', accentSoft: '#365314', headingFont: 'sans' },
-  private_education: { mode: 'light', accent: '#2563eb', accentSoft: '#dbeafe', headingFont: 'sans' },
-  construction: { mode: 'dark', accent: '#eab308', accentSoft: '#713f12', headingFont: 'sans' },
-  home_services: { mode: 'light', accent: '#ea580c', accentSoft: '#ffedd5', headingFont: 'sans' },
-  car_dealer: { mode: 'dark', accent: '#38bdf8', accentSoft: '#0c4a6e', headingFont: 'sans' },
-  jewellery: { mode: 'dark', accent: '#d4af37', accentSoft: '#5c4813', headingFont: 'serif' },
-  optician: { mode: 'light', accent: '#0369a1', accentSoft: '#e0f2fe', headingFont: 'sans' },
-  travel_agency: { mode: 'light', accent: '#0d9488', accentSoft: '#ccfbf1', headingFont: 'sans' },
-  pet_services: { mode: 'light', accent: '#ca8a04', accentSoft: '#fef9c3', headingFont: 'sans' },
-  retail: { mode: 'light', accent: '#7c3aed', accentSoft: '#ede9fe', headingFont: 'sans' },
+  dental_clinic: {
+    mode: 'light',
+    accent: '#0284c7',
+    accentSoft: '#e0f2fe',
+    headingFont: 'sans',
+    heroStyle: 'split',
+  },
+  private_clinic: {
+    mode: 'light',
+    accent: '#0d9488',
+    accentSoft: '#ccfbf1',
+    headingFont: 'sans',
+    heroStyle: 'split',
+  },
+  physiotherapy: {
+    mode: 'light',
+    accent: '#059669',
+    accentSoft: '#d1fae5',
+    headingFont: 'sans',
+    heroStyle: 'split',
+  },
+  veterinary: {
+    mode: 'light',
+    accent: '#0891b2',
+    accentSoft: '#cffafe',
+    headingFont: 'sans',
+    heroStyle: 'split',
+  },
+  pharmacy: {
+    mode: 'light',
+    accent: '#16a34a',
+    accentSoft: '#dcfce7',
+    headingFont: 'sans',
+    heroStyle: 'split',
+  },
+  cosmetic_surgery: {
+    mode: 'light',
+    accent: '#be185d',
+    accentSoft: '#fce7f3',
+    headingFont: 'serif',
+    heroStyle: 'editorial',
+  },
+  beauty: {
+    mode: 'light',
+    accent: '#c026d3',
+    accentSoft: '#fae8ff',
+    headingFont: 'serif',
+    heroStyle: 'showcase',
+  },
+  spa_wellness: {
+    mode: 'light',
+    accent: '#9333ea',
+    accentSoft: '#f3e8ff',
+    headingFont: 'serif',
+    heroStyle: 'showcase',
+  },
+  law_firm: {
+    mode: 'light',
+    accent: '#1e40af',
+    accentSoft: '#e0e7ff',
+    headingFont: 'serif',
+    heroStyle: 'editorial',
+  },
+  professional_services: {
+    mode: 'light',
+    accent: '#3730a3',
+    accentSoft: '#e0e7ff',
+    headingFont: 'serif',
+    heroStyle: 'editorial',
+  },
+  architecture: {
+    mode: 'light',
+    accent: '#334155',
+    accentSoft: '#e2e8f0',
+    headingFont: 'serif',
+    heroStyle: 'editorial',
+  },
+  real_estate: {
+    mode: 'light',
+    accent: '#b45309',
+    accentSoft: '#fef3c7',
+    headingFont: 'serif',
+    heroStyle: 'showcase',
+  },
+  hotel: {
+    mode: 'dark',
+    accent: '#f59e0b',
+    accentSoft: '#78350f',
+    headingFont: 'serif',
+    heroStyle: 'showcase',
+  },
+  restaurant: {
+    mode: 'dark',
+    accent: '#f97316',
+    accentSoft: '#7c2d12',
+    headingFont: 'serif',
+    heroStyle: 'showcase',
+  },
+  cafe_bar: {
+    mode: 'dark',
+    accent: '#f59e0b',
+    accentSoft: '#78350f',
+    headingFont: 'serif',
+    heroStyle: 'showcase',
+  },
+  yacht_charter: {
+    mode: 'dark',
+    accent: '#22d3ee',
+    accentSoft: '#164e63',
+    headingFont: 'sans',
+    heroStyle: 'showcase',
+  },
+  wedding_events: {
+    mode: 'light',
+    accent: '#db2777',
+    accentSoft: '#fce7f3',
+    headingFont: 'serif',
+    heroStyle: 'showcase',
+  },
+  fitness: {
+    mode: 'dark',
+    accent: '#84cc16',
+    accentSoft: '#365314',
+    headingFont: 'sans',
+    heroStyle: 'showcase',
+  },
+  private_education: {
+    mode: 'light',
+    accent: '#2563eb',
+    accentSoft: '#dbeafe',
+    headingFont: 'sans',
+    heroStyle: 'split',
+  },
+  construction: {
+    mode: 'dark',
+    accent: '#eab308',
+    accentSoft: '#713f12',
+    headingFont: 'sans',
+    heroStyle: 'split',
+  },
+  home_services: {
+    mode: 'light',
+    accent: '#ea580c',
+    accentSoft: '#ffedd5',
+    headingFont: 'sans',
+    heroStyle: 'split',
+  },
+  car_dealer: {
+    mode: 'dark',
+    accent: '#38bdf8',
+    accentSoft: '#0c4a6e',
+    headingFont: 'sans',
+    heroStyle: 'showcase',
+  },
+  jewellery: {
+    mode: 'dark',
+    accent: '#d4af37',
+    accentSoft: '#5c4813',
+    headingFont: 'serif',
+    heroStyle: 'showcase',
+  },
+  optician: {
+    mode: 'light',
+    accent: '#0369a1',
+    accentSoft: '#e0f2fe',
+    headingFont: 'sans',
+    heroStyle: 'split',
+  },
+  travel_agency: {
+    mode: 'light',
+    accent: '#0d9488',
+    accentSoft: '#ccfbf1',
+    headingFont: 'sans',
+    heroStyle: 'showcase',
+  },
+  pet_services: {
+    mode: 'light',
+    accent: '#ca8a04',
+    accentSoft: '#fef9c3',
+    headingFont: 'sans',
+    heroStyle: 'split',
+  },
+  retail: {
+    mode: 'light',
+    accent: '#7c3aed',
+    accentSoft: '#ede9fe',
+    headingFont: 'sans',
+    heroStyle: 'showcase',
+  },
 };
 
 const DEFAULT_THEME: DemoTheme = {
@@ -99,6 +283,7 @@ const DEFAULT_THEME: DemoTheme = {
   accent: '#0284c7',
   accentSoft: '#e0f2fe',
   headingFont: 'sans',
+  heroStyle: 'split',
 };
 
 /** Spanish service sets per sector, used when the audit detected none. */
@@ -242,6 +427,16 @@ export function buildConcept(detail: BusinessDetail, claude: ClaudeAnalysis | nu
   const metrics = (detail.audit?.metrics ?? {}) as Record<string, unknown>;
   const detected = Array.isArray(metrics.detectedServices) ? (metrics.detectedServices as string[]) : [];
 
+  /*
+   * Imagery comes from the business's own site, captured during the audit.
+   * og:image first because it is the shot they chose to represent
+   * themselves; the rest of the gallery follows in page order.
+   */
+  const ogImage = typeof metrics.ogImage === 'string' ? metrics.ogImage : null;
+  const logoUrl = typeof metrics.logoUrl === 'string' ? metrics.logoUrl : null;
+  const crawledImages = Array.isArray(metrics.imageUrls) ? (metrics.imageUrls as string[]) : [];
+  const gallery = [...new Set([ogImage, ...crawledImages].filter((u): u is string => typeof u === 'string'))];
+
   const phone = detail.business.primary_phone;
   const phoneFormatted = formatPhone(phone);
   const phoneDigits = phone ? phone.replace(/[^\d+]/g, '') : null;
@@ -284,6 +479,11 @@ export function buildConcept(detail: BusinessDetail, claude: ClaudeAnalysis | nu
     categoryLabel: category.label,
     accent: theme.accent,
     theme,
+    media: {
+      hero: gallery[0] ?? null,
+      logo: logoUrl,
+      gallery: gallery.slice(0, 6),
+    },
     services: servicesFromEvidence(detected, category.key),
     process: DEFAULT_PROCESS[category.key] ?? GENERIC_PROCESS,
     faqs: faqsFor(city, phoneDigits !== null),

@@ -54,6 +54,13 @@ export interface AuditMetrics {
   pagesCrawled: number;
   renderedWithPlaywright: boolean;
   detectedServices: string[];
+  /**
+   * Imagery the business already publishes, kept so a generated concept can
+   * be illustrated with their own photographs instead of stock.
+   */
+  ogImage: string | null;
+  logoUrl: string | null;
+  imageUrls: string[];
 }
 
 export interface AuditResult {
@@ -337,6 +344,9 @@ export async function auditWebsite(startUrl: string): Promise<AuditResult> {
     pagesCrawled: pages.length,
     renderedWithPlaywright,
     detectedServices: [...services].slice(0, 25),
+    ogImage: analysis.ogImage,
+    logoUrl: analysis.logoUrl,
+    imageUrls: analysis.imageUrls,
   };
 
   const issueCodes = buildIssueCodes(metrics, home.ok);
@@ -392,5 +402,8 @@ function emptyMetrics(
     pagesCrawled: 0,
     renderedWithPlaywright: false,
     detectedServices: [],
+    ogImage: null,
+    logoUrl: null,
+    imageUrls: [],
   };
 }

@@ -51,7 +51,8 @@ function palette(theme: DemoTheme): Record<string, string> {
 }
 
 export function renderStyles(accent: string, theme?: DemoTheme): string {
-  const t: DemoTheme = theme ?? { mode: 'light', accent, accentSoft: '#e0f2fe', headingFont: 'sans' };
+  const t: DemoTheme =
+    theme ?? { mode: 'light', accent, accentSoft: '#e0f2fe', headingFont: 'sans', heroStyle: 'split' };
   const c = palette(t);
   const heading =
     t.headingFont === 'serif'
@@ -227,6 +228,41 @@ export function renderStyles(accent: string, theme?: DemoTheme): string {
       background: var(--accent); box-shadow: var(--shadow);
     }
 
+    /* ---- imagery --------------------------------------------------------- */
+    /*
+     * Photographs come from the business's own website, so their dimensions
+     * are unknown and arbitrary. Fixed aspect ratios with object-fit keep the
+     * layout intact whatever shape arrives, and a tinted surface sits behind
+     * every frame so a slow or dead image never leaves a white hole.
+     */
+    .shot { position: relative; overflow: hidden; border-radius: 18px; background: var(--surface-2); border: 1px solid var(--border); }
+    .shot img { display: block; width: 100%; height: 100%; object-fit: cover; }
+    .shot-hero { aspect-ratio: 4 / 3; box-shadow: var(--shadow); }
+    .shot-wide { aspect-ratio: 21 / 9; }
+    .shot-tile { aspect-ratio: 1 / 1; border-radius: 14px; }
+    .gallery { display: grid; gap: 14px; grid-template-columns: repeat(2, 1fr); }
+    .logo-chip { height: 30px; width: auto; max-width: 132px; object-fit: contain; }
+
+    /* Editorial hero: type carries the page, one wide plate beneath it. */
+    .hero-editorial { text-align: left; max-width: 68ch; }
+    .hero-editorial h1 { font-size: clamp(2.6rem, 7vw, 4.6rem); }
+
+    /* Showcase hero: the photograph leads and the copy sits over it. */
+    .hero-showcase { position: relative; border-radius: 22px; overflow: hidden; min-height: 460px; display: flex; align-items: flex-end; border: 1px solid var(--border); }
+    .hero-showcase .shot-bg { position: absolute; inset: 0; }
+    .hero-showcase .shot-bg img { width: 100%; height: 100%; object-fit: cover; }
+    .hero-showcase .veil { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.15) 0%, rgba(0,0,0,.55) 55%, rgba(0,0,0,.82) 100%); }
+    .hero-showcase .showcase-copy { position: relative; padding: 40px 32px; color: #fff; }
+    .hero-showcase .showcase-copy h1 { color: #fff; }
+    .hero-showcase .showcase-copy .lede { color: rgba(255,255,255,.9); }
+    .hero-showcase .showcase-copy .hero-meta { color: rgba(255,255,255,.82); }
+    .hero-showcase .showcase-copy .hero-meta strong { color: #fff; }
+
+    @media (min-width: 760px) {
+      .gallery { grid-template-columns: repeat(4, 1fr); }
+      .hero-showcase .showcase-copy { padding: 56px 48px; max-width: 42rem; }
+    }
+
     footer { padding: 48px 0; border-top: 1px solid var(--border); color: var(--muted); font-size: .85rem; }
     .notice {
       margin-top: 18px; padding: 13px 17px; border-radius: 11px;
@@ -386,6 +422,101 @@ function renderLocation(concept: DemoConcept): string {
 }
 
 /**
+ * A photograph from the business's own site.
+ *
+ * loading/decoding hints keep a slow third-party host from blocking paint,
+ * and referrerpolicy stops the concept from telling that host who is looking
+ * at the proposal.
+ */
+function shot(url: string, alt: string, className: string): string {
+  return `<div class="shot ${className}"><img src="${safeHref(url)}" alt="${escapeHtml(alt)}" loading="lazy" decoding="async" referrerpolicy="no-referrer"></div>`;
+}
+
+/** The hero, composed to the sector's archetype. */
+function renderHero(concept: DemoConcept, parts: { whatsapp: string; heroMeta: string }): string {
+  const { whatsapp, heroMeta } = parts;
+  const hero = concept.media.hero;
+
+  const copy = [
+    '<span class="eyebrow">' + escapeHtml(concept.categoryLabel) + '</span>',
+    '<h1>' + escapeHtml(concept.tagline) + '</h1>',
+    '<p class="lede">' + escapeHtml(concept.intro) + '</p>',
+    '<div class="hero-actions">',
+    '<a class="btn btn-primary" href="' + safeHref(concept.primaryCta.href) + '">' + escapeHtml(concept.primaryCta.label) + '</a>',
+    whatsapp,
+    '<a class="btn btn-ghost" href="' + safeHref(concept.secondaryCta.href) + '">' + escapeHtml(concept.secondaryCta.label) + '</a>',
+    '</div>',
+    '<div class="hero-meta">' + heroMeta + '</div>',
+  ].join('');
+
+  /*
+   * Showcase only works when there is a photograph to show. Without one it
+   * would render as a large empty rectangle, so the sector quietly falls back
+   * to the split composition.
+   */
+  if (concept.theme.heroStyle === 'showcase' && hero) {
+    return `
+  <div class="hero">
+    <div class="wrap">
+      <div class="hero-showcase">
+        <div class="shot-bg"><img src="${safeHref(hero)}" alt="${escapeHtml(concept.businessName)}" decoding="async" referrerpolicy="no-referrer"></div>
+        <div class="veil"></div>
+        <div class="showcase-copy">${copy}</div>
+      </div>
+    </div>
+  </div>`;
+  }
+
+  if (concept.theme.heroStyle === 'editorial') {
+    return `
+  <div class="hero">
+    <div class="wrap">
+      <div class="hero-editorial">${copy}</div>
+      ${hero ? '<div style="margin-top:44px">' + shot(hero, concept.businessName, 'shot-wide') + '</div>' : ''}
+    </div>
+  </div>`;
+  }
+
+  const aside = hero
+    ? shot(hero, concept.businessName, 'shot-hero')
+    : `<aside class="hero-card">
+        <h3>Pide cita en un minuto</h3>
+        <ul class="checks">
+          <li><span class="tick" aria-hidden="true">&check;</span><span>Sin esperas al teléfono: escríbenos y te confirmamos.</span></li>
+          <li><span class="tick" aria-hidden="true">&check;</span><span>Presupuesto claro antes de empezar.</span></li>
+          <li><span class="tick" aria-hidden="true">&check;</span><span>Horario adaptado, también fuera de la jornada.</span></li>
+        </ul>
+        <div style="margin-top:22px">
+          <a class="btn btn-primary" style="width:100%" href="#contact">${escapeHtml(concept.booking.label)}</a>
+        </div>
+      </aside>`;
+
+  return `
+  <div class="hero">
+    <div class="wrap hero-grid">
+      <div>${copy}</div>
+      ${aside}
+    </div>
+  </div>`;
+}
+
+/** The gallery, shown only when the business publishes more than one usable image. */
+function renderGallery(concept: DemoConcept): string {
+  const tiles = concept.media.gallery.slice(1, 5);
+  if (tiles.length < 2) return '';
+
+  return `
+  <section id="gallery">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>El centro por dentro</h2>
+        <p class="section-sub">Imágenes publicadas por el propio negocio.</p>
+      </div>
+      <div class="gallery">${tiles.map((url, i) => shot(url, concept.businessName + ' — imagen ' + (i + 1), 'shot-tile')).join('')}</div>
+    </div>
+  </section>`;
+}
+/**
  * Renders the complete demo page.
  *
  * Self-contained by design: no external stylesheet, font, script or image. A
@@ -420,6 +551,14 @@ export function renderDemoHtml(concept: DemoConcept): string {
     ? `<a class="btn btn-wa" style="width:100%" href="${safeHref(concept.contact.whatsappHref)}" target="_blank" rel="noopener noreferrer">WhatsApp</a>`
     : '';
 
+  /*
+   * The header shows the real logo when the site publishes one, and falls
+   * back to a generated monogram otherwise. A favicon is often tiny or
+   * square-cropped, so it is constrained rather than trusted to fit.
+   */
+  const logoMark = concept.media.logo
+    ? `<img class="logo-chip" src="${safeHref(concept.media.logo)}" alt="${escapeHtml(concept.businessName)}" decoding="async" referrerpolicy="no-referrer">`
+    : `<span class="mark" aria-hidden="true">${escapeHtml(concept.monogram)}</span>`;
   const bestRating = concept.reviews.find((r) => r.rating !== null)?.rating ?? null;
   const heroMeta = [
     bestRating === null ? '' : `<span><strong>${bestRating.toFixed(1)}</strong> de valoración media</span>`,
@@ -446,7 +585,7 @@ export function renderDemoHtml(concept: DemoConcept): string {
 <header>
   <div class="wrap nav">
     <a class="brand" href="#top">
-      <span class="mark" aria-hidden="true">${escapeHtml(concept.monogram)}</span>
+      ${logoMark}
       <span>
         <span class="brand-name">${escapeHtml(concept.businessName)}</span>
         <span class="brand-sub">${escapeHtml(concept.location.city ?? 'Málaga')}</span>
@@ -464,32 +603,7 @@ export function renderDemoHtml(concept: DemoConcept): string {
 </header>
 
 <main id="top">
-  <div class="hero">
-    <div class="wrap hero-grid">
-      <div>
-        <span class="eyebrow">${escapeHtml(concept.categoryLabel)}</span>
-        <h1>${escapeHtml(concept.tagline)}</h1>
-        <p class="lede">${escapeHtml(concept.intro)}</p>
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="${safeHref(concept.primaryCta.href)}">${escapeHtml(concept.primaryCta.label)}</a>
-          ${whatsapp}
-          <a class="btn btn-ghost" href="${safeHref(concept.secondaryCta.href)}">${escapeHtml(concept.secondaryCta.label)}</a>
-        </div>
-        <div class="hero-meta">${heroMeta}</div>
-      </div>
-      <aside class="hero-card">
-        <h3>Pide cita en un minuto</h3>
-        <ul class="checks">
-          <li><span class="tick" aria-hidden="true">&check;</span><span>Sin esperas al teléfono: escríbenos y te confirmamos.</span></li>
-          <li><span class="tick" aria-hidden="true">&check;</span><span>Presupuesto claro antes de empezar.</span></li>
-          <li><span class="tick" aria-hidden="true">&check;</span><span>Horario adaptado, también fuera de la jornada.</span></li>
-        </ul>
-        <div style="margin-top:22px">
-          <a class="btn btn-primary" style="width:100%" href="#contact">${escapeHtml(concept.booking.label)}</a>
-        </div>
-      </aside>
-    </div>
-  </div>
+${renderHero(concept, { whatsapp, heroMeta })}
 
   <section id="services">
     <div class="wrap">
@@ -500,6 +614,8 @@ export function renderDemoHtml(concept: DemoConcept): string {
       <div class="grid">${renderServices(concept)}</div>
     </div>
   </section>
+
+${renderGallery(concept)}
 
   <section id="process">
     <div class="wrap">
