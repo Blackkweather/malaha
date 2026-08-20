@@ -7,6 +7,7 @@ import type { GroqAnalysis } from '@/lib/ai/groq';
 import { CATEGORY_BY_KEY, OTHER_CATEGORY } from '@/lib/normalize/category';
 import { getBusinessDetail } from '@/lib/repo/businesses';
 import { AiPanels } from '@/components/AiPanels';
+import { PreparePitch } from '@/components/PreparePitch';
 import { OutreachPanel } from '@/components/OutreachPanel';
 
 export const dynamic = 'force-dynamic';
@@ -215,6 +216,8 @@ export default async function ProspectDetailPage({ params }: { params: Promise<{
               </ul>
             ) : null}
           </Panel>
+
+          <PreparePitch businessId={detail.business.id} />
 
           <OutreachPanel businessId={detail.business.id} />
 
