@@ -45,6 +45,9 @@ export interface DemoConcept {
     mapsQuery: string | null;
   };
   booking: { available: boolean; label: string; href: string };
+  /** Structured data, and the comparison that does the selling. */
+  seo: DemoSeo;
+  comparison: ComparisonRow[];
   sourceNote: string;
   generatedFrom: 'facts' | 'facts_and_claude';
 }
@@ -68,6 +71,30 @@ export interface DemoConcept {
  * clinic illustrated with somebody else's waiting room is a worse lie than
  * no photograph at all.
  */
+/**
+ * Search and answer-engine metadata.
+ *
+ * The demo page itself is noindex, so this is not about ranking the demo.
+ * It is that the concept demonstrates the structured data the prospect is
+ * missing today, and the same generator produces the real site once the
+ * deal closes: a typed LocalBusiness entity, FAQ markup Google renders as
+ * rich results, and clean question/answer blocks an AI assistant can quote.
+ */
+export interface DemoSeo {
+  /** schema.org type, narrowed by sector. */
+  schemaType: string;
+  description: string;
+  latitude: number | null;
+  longitude: number | null;
+  sameAs: string[];
+}
+
+/** One "today vs this concept" row, taken from the audit. */
+export interface ComparisonRow {
+  today: string;
+  proposed: string;
+}
+
 export interface DemoMedia {
   hero: string | null;
   /** True when the pictures are generic stock, not the business's own. */
@@ -342,6 +369,78 @@ function stockImages(categoryKey: string, seed: string, count: number): string[]
   );
 }
 
+/**
+ * schema.org types per sector.
+ *
+ * A bare LocalBusiness is a wasted opportunity: Google and the answer
+ * engines treat a typed Dentist or LegalService as a far stronger entity
+ * signal, and most small-business sites declare no type at all.
+ */
+const SCHEMA_TYPES: Record<string, string> = {
+  dental_clinic: "Dentist",
+  private_clinic: "MedicalClinic",
+  cosmetic_surgery: "MedicalClinic",
+  physiotherapy: "Physiotherapy",
+  veterinary: "VeterinaryCare",
+  pharmacy: "Pharmacy",
+  law_firm: "LegalService",
+  professional_services: "ProfessionalService",
+  architecture: "ProfessionalService",
+  real_estate: "RealEstateAgent",
+  hotel: "Hotel",
+  restaurant: "Restaurant",
+  cafe_bar: "CafeOrCoffeeShop",
+  beauty: "BeautySalon",
+  spa_wellness: "DaySpa",
+  fitness: "ExerciseGym",
+  private_education: "EducationalOrganization",
+  travel_agency: "TravelAgency",
+  car_dealer: "AutomotiveBusiness",
+  jewellery: "JewelryStore",
+  optician: "Optician",
+  pet_services: "PetStore",
+  home_services: "HomeAndConstructionBusiness",
+  construction: "GeneralContractor",
+  wedding_events: "EventVenue",
+  retail: "Store",
+};
+
+/**
+ * What the audit found, paired with what the concept does instead.
+ *
+ * This is the section that sells. Not "your site looks dated" — a specific,
+ * checkable list of what is wrong today beside what replaces it. Every row
+ * comes from a real finding, so the owner can verify each one, and a problem
+ * their site does not have is never listed.
+ */
+const COMPARISONS: Record<string, ComparisonRow> = {
+  no_website: { today: "Sin web: esas búsquedas acaban en la competencia", proposed: "Web propia indexable, con ficha de negocio estructurada" },
+  social_only_presence: { today: "Solo redes sociales, sin dominio propio", proposed: "Dominio propio y control total de la presencia online" },
+  website_unreachable: { today: "La web no responde", proposed: "Alojamiento estable, con certificado y copias" },
+  http_error_status: { today: "La página principal devuelve un error", proposed: "Sitio funcionando y monitorizado" },
+  no_https: { today: "Sin HTTPS: el navegador la marca como no segura", proposed: "HTTPS en todo el sitio" },
+  no_mobile_viewport: { today: "No adaptada a móvil", proposed: "Diseño móvil primero, donde está la mayoría del tráfico" },
+  fixed_width_layout: { today: "Ancho fijo: se rompe en pantallas pequeñas", proposed: "Rejilla fluida que se adapta a cualquier pantalla" },
+  very_slow_response: { today: "Carga muy lenta", proposed: "Carga por debajo del segundo, sin recursos que bloqueen" },
+  slow_response: { today: "Respuesta lenta del servidor", proposed: "Entrega optimizada desde CDN" },
+  no_phone_link: { today: "El teléfono no se puede pulsar desde el móvil", proposed: "Llamada a un toque y WhatsApp siempre visibles" },
+  no_contact_path: { today: "Sin vía de contacto clara", proposed: "Formulario corto, WhatsApp y teléfono en cada pantalla" },
+  no_booking_path: { today: "Sin cita online", proposed: "Reserva online, sin llamar ni esperar" },
+  no_whatsapp: { today: "Sin WhatsApp", proposed: "WhatsApp como canal principal, como espera el cliente aquí" },
+  weak_cta: { today: "Sin llamada a la acción clara", proposed: "Una acción principal evidente en cada sección" },
+  missing_title: { today: "Sin título de página utilizable", proposed: "Títulos escritos para búsqueda local" },
+  missing_meta_description: { today: "Sin meta descripción", proposed: "Descripciones que ganan el clic en Google" },
+  missing_h1: { today: "Sin encabezado H1", proposed: "Jerarquía semántica correcta de principio a fin" },
+  missing_canonical: { today: "Sin URL canónica", proposed: "Canónicas y sitemap generados automáticamente" },
+  low_image_alt_coverage: { today: "Imágenes sin texto alternativo", proposed: "Alt en todas las imágenes: accesibilidad y SEO" },
+  no_lang_attribute: { today: "Sin idioma declarado", proposed: "Idioma y región declarados para búsqueda local" },
+  broken_links: { today: "Enlaces internos rotos", proposed: "Enlazado interno revisado y monitorizado" },
+  no_social_links: { today: "Sin perfiles sociales enlazados", proposed: "Perfiles enlazados y declarados como la misma entidad" },
+  stale_copyright: { today: "Año de copyright desactualizado", proposed: "Sitio mantenido, con señales de actividad recientes" },
+  legacy_markup: { today: "Código y técnicas ya obsoletas", proposed: "HTML moderno, accesible y rápido" },
+  free_site_builder: { today: "Alojada en un subdominio gratuito", proposed: "Dominio propio, sin publicidad de terceros" },
+  no_analytics: { today: "Sin analítica: no se puede medir nada", proposed: "Medición de llamadas, formularios y reservas" },
+};
 /** Spanish service sets per sector, used when the audit detected none. */
 const DEFAULT_SERVICES: Record<string, { title: string; description: string }[]> = {
   dental_clinic: [
@@ -499,6 +598,16 @@ export function buildConcept(detail: BusinessDetail, claude: ClaudeAnalysis | nu
    * pitch, so the sector is illustrated with clearly generic stock, labelled
    * as such on the page.
    */
+  /*
+   * The comparison is ordered by the weight the auditor already assigned to
+   * each finding, so the top row is the one costing them most rather than
+   * whichever happened to be detected first.
+   */
+  const comparison = detail.issues
+    .map((issue) => COMPARISONS[issue.code])
+    .filter((row): row is ComparisonRow => row !== undefined)
+    .slice(0, 6);
+
   const usingStock = gallery.length === 0;
   const media = usingStock ? stockImages(category.key, detail.business.id, 5) : gallery;
 
@@ -583,6 +692,14 @@ export function buildConcept(detail: BusinessDetail, claude: ClaudeAnalysis | nu
       label: bookingAvailable ? 'Reservar online' : 'Que me llamen',
       href: '#contact',
     },
+    seo: {
+      schemaType: SCHEMA_TYPES[category.key] ?? "LocalBusiness",
+      description: `${category.label} en ${city}. ${detail.business.description ?? ""}`.trim().slice(0, 300),
+      latitude: detail.business.latitude,
+      longitude: detail.business.longitude,
+      sameAs: detail.socials.map((profile) => profile.url).slice(0, 6),
+    },
+    comparison,
     sourceNote:
       'Concepto generado a partir de información pública del negocio, con fines de demostración.',
     generatedFrom: claude ? 'facts_and_claude' : 'facts',

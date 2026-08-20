@@ -26,6 +26,7 @@ Thumbs.db
 
 .vercel
 .env*
+
 # ...but the annotated template must be committed, or a fresh clone has
 # nothing to copy from.
 !.env.example

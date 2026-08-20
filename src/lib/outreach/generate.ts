@@ -3,6 +3,7 @@ import { query, queryOne } from '../db/pool';
 import { logger } from '../logger';
 import { extractJson } from '../ai/json';
 import { getBusinessDetail, type BusinessDetail } from '../repo/businesses';
+import { routeJson } from '../ai/router';
 import {
   composeMessage,
   evidenceLines,
@@ -117,6 +118,40 @@ function buildUserPrompt(
   ].join('\n');
 }
 
+/**
+ * Writes the message through the AI Gateway.
+ *
+ * Preferred over the direct Groq call: it can reach a stronger model for
+ * copy a business owner will actually read, and it fails over between
+ * providers instead of dying when one of them retires a model.
+ */
+async function writeWithGateway(
+  evidence: OutreachEvidence,
+  angle: string,
+  supportingCodes: string[],
+  options: { language: OutreachLanguage; channel: OutreachChannel; senderName: string },
+): Promise<{ message: ComposedMessage; model: string } | null> {
+  const result = await routeJson(
+    'write',
+    SYSTEM_PROMPT,
+    buildUserPrompt(evidence, angle, supportingCodes, options),
+    { temperature: 0.4, maxTokens: 900, tags: [`channel:${options.channel}`] },
+  );
+  if (!result) return null;
+
+  const raw = extractJson(result.text);
+  if (typeof raw !== 'object' || raw === null) return null;
+  const o = raw as Record<string, unknown>;
+  const subject = typeof o.subject === 'string' ? o.subject.trim() : '';
+  const body = typeof o.body === 'string' ? o.body.trim() : '';
+
+  // Same guard as the Groq path: an empty or stub message must never
+  // silently replace the deterministic copy, which is always usable.
+  if (subject.length < 5 || body.length < 60) return null;
+
+  return { message: { subject, body }, model: result.model };
+}
+
 async function writeWithGroq(
   evidence: OutreachEvidence,
   angle: string,
@@ -178,7 +213,7 @@ export interface OutreachRecord {
   body: string;
   angle: string;
   evidence: string[];
-  generator: 'groq' | 'deterministic';
+  generator: 'groq' | 'claude' | 'deterministic';
   model: string | null;
   createdAt: string;
 }
@@ -213,16 +248,35 @@ export async function generateOutreach(
   const evidence = buildOutreachEvidence(detail);
   const selection = pickAngle(evidence);
 
-  const fromModel = options.deterministicOnly
+  /*
+   * Gateway first, then the direct Groq call, then the deterministic
+   * composer. Each step down is a loss of polish but never of availability,
+   * so drafting a message cannot fail outright.
+   */
+  const promptOptions = { language, channel, senderName };
+  const viaGateway = options.deterministicOnly
     ? null
-    : await writeWithGroq(evidence, selection.angle, selection.supportingCodes, {
-        language,
-        channel,
-        senderName,
-      });
+    : await writeWithGateway(evidence, selection.angle, selection.supportingCodes, promptOptions);
+
+  const fromModel =
+    viaGateway?.message ??
+    (options.deterministicOnly
+      ? null
+      : await writeWithGroq(evidence, selection.angle, selection.supportingCodes, promptOptions));
+
+  const usedModel = viaGateway ? viaGateway.model : fromModel ? config.ai.groq.model : null;
 
   const message = fromModel ?? composeMessage(evidence, selection, { language, channel, senderName });
-  const generator = fromModel ? 'groq' : 'deterministic';
+  /*
+   * Attribution has to match what actually wrote the message, and the column
+   * is constrained to groq | claude | deterministic. A gateway call served by
+   * Anthropic is recorded as claude, anything else as groq.
+   */
+  const generator = !fromModel
+    ? 'deterministic'
+    : usedModel?.startsWith('anthropic/')
+      ? 'claude'
+      : 'groq';
 
   const row = await queryOne<{ id: string; created_at: Date }>(
     `INSERT INTO outreach_messages
@@ -238,7 +292,7 @@ export async function generateOutreach(
       selection.angle,
       JSON.stringify(selection.supportingCodes),
       generator,
-      fromModel ? config.ai.groq.model : null,
+      usedModel,
       OUTREACH_PROMPT_VERSION,
     ],
   );
@@ -259,7 +313,7 @@ export async function generateOutreach(
     angle: selection.angle,
     evidence: selection.supportingCodes,
     generator,
-    model: fromModel ? config.ai.groq.model : null,
+    model: usedModel,
     createdAt: new Date(row.created_at).toISOString(),
   };
 }
@@ -275,7 +329,7 @@ export async function listOutreachForBusiness(businessId: string): Promise<Outre
     body: string;
     angle: string | null;
     evidence: unknown;
-    generator: 'groq' | 'deterministic';
+    generator: 'groq' | 'claude' | 'deterministic';
     model: string | null;
     created_at: Date;
   }>(

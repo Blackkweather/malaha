@@ -183,6 +183,56 @@ export function renderStyles(accent: string, theme?: DemoTheme): string {
     .cta-band p { color: color-mix(in srgb, var(--on-accent) 82%, transparent); max-width: 52ch; }
     .cta-band .btn-ghost { border-color: color-mix(in srgb, var(--on-accent) 45%, transparent); color: var(--on-accent); background: transparent; }
 
+    /* Old on the left, proposed on the right; the old column is deliberately
+       drained of colour so the contrast does the arguing. */
+    .vs { display: grid; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+    .vs-row { display: grid; grid-template-columns: 1fr; gap: 1px; background: var(--border); }
+    .vs-old, .vs-new { background: var(--bg); padding: 22px 24px; }
+    .vs-old { opacity: .62; }
+    .vs-old p { text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--muted) 55%, transparent); }
+    .vs-tag {
+      display: block; font-family: var(--mono); font-size: .68rem; letter-spacing: .16em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 10px;
+    }
+    .vs-tag-new { color: var(--accent); }
+    .vs-new p { font-weight: 500; }
+    @media (min-width: 760px) { .vs-row { grid-template-columns: 1fr 1fr; } }
+
+    /* ---- motion ---------------------------------------------------------- */
+    /*
+     * All of it is opt-in: the js-motion class is added by script, and every
+     * rule is disabled under prefers-reduced-motion. A concept that induces
+     * motion sickness is not a better concept.
+     */
+
+    /* Words rise into place, staggered, the way a title sequence resolves. */
+    .js-motion .word { display: inline-block; will-change: transform, opacity; }
+    .js-motion .word > span { display: inline-block; transform: translateY(105%); opacity: 0; }
+    .js-motion .in .word > span {
+      transform: none; opacity: 1;
+      transition: transform .9s cubic-bezier(.16,1,.3,1), opacity .6s ease;
+      transition-delay: calc(var(--i, 0) * 55ms);
+    }
+
+    /* Depth: the hero plate tilts a few degrees toward the cursor. */
+    .js-motion .tilt { perspective: 1100px; }
+    .js-motion .tilt > * {
+      transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateZ(0);
+      transition: transform .5s cubic-bezier(.16,1,.3,1);
+      transform-style: preserve-3d;
+    }
+
+    /* Parallax: gallery tiles drift at different rates while scrolling. */
+    .js-motion .parallax { will-change: transform; }
+
+    .stat .value { font-variant-numeric: tabular-nums; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .js-motion .word > span { transform: none !important; opacity: 1 !important; }
+      .js-motion .tilt > * { transform: none !important; }
+      .js-motion .parallax { transform: none !important; }
+    }
+
     .stock-note { margin-top: 14px; font-size: .78rem; color: var(--muted); }
     .grid { display: grid; gap: 18px; grid-template-columns: 1fr; }
     /* Whitespace does the work a border used to do. */
@@ -457,13 +507,28 @@ function shot(url: string, alt: string, className: string): string {
 }
 
 /** The hero, composed to the sector's archetype. */
+/**
+ * Wraps each word so it can be animated independently.
+ *
+ * The inner span is what moves; the outer word is the mask it moves behind.
+ * Escaping happens per word, so the markup this introduces can never come
+ * from the business's own name.
+ */
+function splitWords(text: string): string {
+  return text
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word, i) => `<span class="word" style="--i:${i}"><span>${escapeHtml(word)}</span></span>`)
+    .join(' ');
+}
+
 function renderHero(concept: DemoConcept, parts: { whatsapp: string; heroMeta: string }): string {
   const { whatsapp, heroMeta } = parts;
   const hero = concept.media.hero;
 
   const copy = [
     '<span class="eyebrow">' + escapeHtml(concept.categoryLabel) + '</span>',
-    '<h1>' + escapeHtml(concept.tagline) + '</h1>',
+    '<h1>' + splitWords(concept.tagline) + '</h1>',
     '<p class="lede">' + escapeHtml(concept.intro) + '</p>',
     '<div class="hero-actions">',
     '<a class="btn btn-primary" href="' + safeHref(concept.primaryCta.href) + '">' + escapeHtml(concept.primaryCta.label) + '</a>',
@@ -502,7 +567,7 @@ function renderHero(concept: DemoConcept, parts: { whatsapp: string; heroMeta: s
   }
 
   const aside = hero
-    ? shot(hero, concept.businessName, 'shot-hero')
+    ? `<div class="tilt">${shot(hero, concept.businessName, 'shot-hero')}</div>`
     : `<aside class="hero-card">
         <h3>Pide cita en un minuto</h3>
         <ul class="checks">
@@ -540,7 +605,105 @@ function renderGallery(concept: DemoConcept): string {
             : 'Imágenes publicadas por el propio negocio.'
         }</p>
       </div>
-      <div class="gallery">${tiles.map((url, i) => shot(url, concept.businessName + ' — imagen ' + (i + 1), 'shot-tile')).join('')}</div>
+      <div class="gallery">${tiles.map((url, i) => shot(url, concept.businessName + ' — imagen ' + (i + 1), 'shot-tile parallax')).join('')}</div>
+    </div>
+  </section>`;
+}
+/**
+ * JSON-LD for the business.
+ *
+ * This is the part that keeps paying after the site ships. A typed entity
+ * with address, coordinates, contact and rating is what earns the map pack,
+ * the knowledge panel, and a citation when someone asks an assistant for a
+ * dentist in Malaga. Most small-business sites publish none of it, which is
+ * exactly why it is worth showing them theirs.
+ *
+ * Serialised with JSON.stringify and with < escaped, so no business-supplied
+ * string can close the script tag.
+ */
+function renderJsonLd(concept: DemoConcept): string {
+  const business: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": concept.seo.schemaType,
+    name: concept.businessName,
+    description: concept.seo.description,
+    areaServed: concept.location.city ?? "Malaga",
+  };
+
+  if (concept.location.address) {
+    business.address = {
+      "@type": "PostalAddress",
+      streetAddress: concept.location.address,
+      addressLocality: concept.location.city ?? "Malaga",
+      postalCode: concept.location.postalCode ?? undefined,
+      addressCountry: "ES",
+    };
+  }
+  if (concept.seo.latitude !== null && concept.seo.longitude !== null) {
+    business.geo = {
+      "@type": "GeoCoordinates",
+      latitude: concept.seo.latitude,
+      longitude: concept.seo.longitude,
+    };
+  }
+  if (concept.contact.phone) business.telephone = concept.contact.phone;
+  if (concept.contact.email) business.email = concept.contact.email;
+  if (concept.media.hero && !concept.media.isStock) business.image = concept.media.hero;
+  if (concept.seo.sameAs.length > 0) business.sameAs = concept.seo.sameAs;
+
+  // Only claim a rating when there is a real one with a real count behind it.
+  const rated = concept.reviews.find((r) => r.rating !== null && r.count !== null);
+  if (rated && rated.rating !== null && rated.count !== null) {
+    business.aggregateRating = {
+      "@type": "AggregateRating",
+      ratingValue: rated.rating,
+      reviewCount: rated.count,
+    };
+  }
+
+  const faq = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: concept.faqs.map((f) => ({
+      "@type": "Question",
+      name: f.question,
+      acceptedAnswer: { "@type": "Answer", text: f.answer },
+    })),
+  };
+
+  const json = JSON.stringify([business, faq]).split("<").join("\\u003c");
+  return `<script type="application/ld+json">${json}</script>`;
+}
+
+/**
+ * The section that ages their current site.
+ *
+ * Every row is a finding the auditor actually recorded against their domain,
+ * so the owner can check each one. That is what makes it land: not an opinion
+ * about their taste, but a list they can verify and did not know about.
+ */
+function renderComparison(concept: DemoConcept): string {
+  if (concept.comparison.length === 0) return '';
+
+  const rows = concept.comparison
+    .map(
+      (row) => `
+        <div class="vs-row reveal">
+          <div class="vs-old"><span class="vs-tag">Ahora</span><p>${escapeHtml(row.today)}</p></div>
+          <div class="vs-new"><span class="vs-tag vs-tag-new">Con esta web</span><p>${escapeHtml(row.proposed)}</p></div>
+        </div>`,
+    )
+    .join('');
+
+  return `
+  <section id="comparativa">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="section-index">04 — Diagnóstico</span>
+        <h2>Qué encontramos hoy en vuestra web</h2>
+        <p class="section-sub">Cada punto es una comprobación real sobre vuestro dominio. Podéis verificarlos uno a uno.</p>
+      </div>
+      <div class="vs">${rows}</div>
     </div>
   </section>`;
 }
@@ -607,6 +770,13 @@ export function renderDemoHtml(concept: DemoConcept): string {
 <meta name="description" content="${escapeHtml(concept.tagline)}">
 <meta name="robots" content="noindex, nofollow">
 <meta name="color-scheme" content="${concept.theme.mode}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="${escapeHtml(concept.businessName)}">
+<meta property="og:description" content="${escapeHtml(concept.seo.description)}">
+<meta property="og:locale" content="es_ES">
+${concept.media.hero ? `<meta property="og:image" content="${safeHref(concept.media.hero)}">` : ""}
+<meta name="twitter:card" content="summary_large_image">
+${renderJsonLd(concept)}
 <style>${renderStyles(concept.accent, concept.theme)}</style>
 </head>
 <body>
@@ -645,6 +815,8 @@ ${renderHero(concept, { whatsapp, heroMeta })}
   </section>
 
 ${renderGallery(concept)}
+
+${renderComparison(concept)}
 
   <section id="process">
     <div class="wrap">
@@ -739,6 +911,66 @@ ${renderGallery(concept)}
       });
     }, { rootMargin: "0px 0px -12% 0px" });
     document.querySelectorAll(".reveal").forEach(function (el) { io.observe(el); });
+
+    document.body.classList.add("js-motion");
+
+    // Headline words resolve as soon as the hero paints.
+    var h1 = document.querySelector("h1");
+    if (h1) { requestAnimationFrame(function () { h1.classList.add("in"); }); }
+
+    // Pointer tilt, clamped to a few degrees so it reads as depth, not gimmick.
+    document.querySelectorAll(".tilt").forEach(function (box) {
+      box.addEventListener("pointermove", function (e) {
+        var r = box.getBoundingClientRect();
+        var px = (e.clientX - r.left) / r.width - 0.5;
+        var py = (e.clientY - r.top) / r.height - 0.5;
+        box.style.setProperty("--ry", (px * 7).toFixed(2) + "deg");
+        box.style.setProperty("--rx", (-py * 7).toFixed(2) + "deg");
+      });
+      box.addEventListener("pointerleave", function () {
+        box.style.setProperty("--ry", "0deg");
+        box.style.setProperty("--rx", "0deg");
+      });
+    });
+
+    // One rAF-throttled scroll handler for parallax, so the page never runs
+    // layout work on every scroll event.
+    var tiles = [].slice.call(document.querySelectorAll(".parallax"));
+    var ticking = false;
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function () {
+        var vh = window.innerHeight;
+        tiles.forEach(function (t, i) {
+          var r = t.getBoundingClientRect();
+          var progress = (r.top + r.height / 2 - vh / 2) / vh;
+          t.style.transform = "translate3d(0," + (progress * (i % 2 ? -14 : 14)).toFixed(1) + "px,0)";
+        });
+        ticking = false;
+      });
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+
+    // Numeric trust points count up the first time they come into view.
+    document.querySelectorAll(".stat .value").forEach(function (el) {
+      var raw = el.textContent.trim();
+      var target = parseFloat(raw.replace(",", "."));
+      if (!isFinite(target) || String(target).length !== raw.length) return;
+      var decimals = (raw.split(/[.,]/)[1] || "").length;
+      var seen = new IntersectionObserver(function (entries) {
+        if (!entries[0].isIntersecting) return;
+        seen.disconnect();
+        var start = performance.now();
+        (function step(now) {
+          var t = Math.min(1, (now - start) / 900);
+          el.textContent = (target * (1 - Math.pow(1 - t, 3))).toFixed(decimals);
+          if (t < 1) requestAnimationFrame(step);
+        })(start);
+      });
+      seen.observe(el);
+    });
   })();
 </script>
 </body>
