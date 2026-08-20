@@ -1,4 +1,5 @@
 import { claudeEnabled, config, googlePlacesEnabled, groqEnabled } from '@/lib/config';
+import { routerStatus } from '@/lib/ai/router';
 import { pingDatabase, queryOne } from '@/lib/db/pool';
 import { withGuard } from '@/lib/http/guard';
 import { ok } from '@/lib/http/respond';
@@ -37,6 +38,9 @@ export const GET = withGuard('read', async () => {
       },
       weights: config.weights,
       providers: {
+        // Routing status is reported, not assumed: a gateway that quietly
+        // falls back to the direct provider looks identical from outside.
+        gateway: routerStatus(),
         groq: groqEnabled() ? 'configured' : 'not_configured',
         claude: claudeEnabled() ? 'configured' : 'not_configured',
         googlePlaces: googlePlacesEnabled() ? 'configured' : 'not_configured',
