@@ -213,7 +213,7 @@ export interface OutreachRecord {
   body: string;
   angle: string;
   evidence: string[];
-  generator: 'groq' | 'claude' | 'deterministic';
+  generator: 'gateway' | 'groq' | 'claude' | 'deterministic';
   model: string | null;
   createdAt: string;
 }
@@ -272,11 +272,12 @@ export async function generateOutreach(
    * is constrained to groq | claude | deterministic. A gateway call served by
    * Anthropic is recorded as claude, anything else as groq.
    */
-  const generator = !fromModel
-    ? 'deterministic'
-    : usedModel?.startsWith('anthropic/')
-      ? 'claude'
-      : 'groq';
+  /*
+   * Name what actually served the request. A gateway-routed call is not a
+   * Groq call even when the gateway happens to pick a Groq-hosted model:
+   * they bill differently, fail differently, and are swapped independently.
+   */
+  const generator = !fromModel ? 'deterministic' : viaGateway ? 'gateway' : 'groq';
 
   const row = await queryOne<{ id: string; created_at: Date }>(
     `INSERT INTO outreach_messages
@@ -329,7 +330,7 @@ export async function listOutreachForBusiness(businessId: string): Promise<Outre
     body: string;
     angle: string | null;
     evidence: unknown;
-    generator: 'groq' | 'claude' | 'deterministic';
+    generator: 'gateway' | 'groq' | 'claude' | 'deterministic';
     model: string | null;
     created_at: Date;
   }>(

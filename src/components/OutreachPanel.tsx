@@ -180,7 +180,9 @@ export function OutreachPanel({ businessId }: { businessId: string }) {
               {latest.channel} · {latest.language}
             </span>
             <span className="rounded border border-line px-2 py-0.5 text-ink-dim">
-              {latest.generator === 'groq' ? `written by ${latest.model ?? 'Groq'}` : 'template'}
+              {latest.generator === 'deterministic'
+                ? 'template'
+                : `written by ${latest.model ?? latest.generator}`}
             </span>
             <button
               type="button"
