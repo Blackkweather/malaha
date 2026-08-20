@@ -30,3 +30,5 @@ Thumbs.db
 # ...but the annotated template must be committed, or a fresh clone has
 # nothing to copy from.
 !.env.example
+
+.env*

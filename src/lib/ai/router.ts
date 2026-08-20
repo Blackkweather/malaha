@@ -23,22 +23,33 @@ export type RouterTask = 'classify' | 'analyse' | 'write';
 /**
  * Model per task, cheapest capable model first.
  *
+ * These are the models the AI Gateway free tier actually serves. Probed on
+ * 2026-08-20: the gpt-oss pair answers normally, while claude-haiku-4.5 and
+ * claude-sonnet-4.6 return 'Free tier users do not have access to this
+ * model', and the gemini, llama, deepseek, mistral and glm families are
+ * rate-limited to the point of being unusable. Defaulting to a model the
+ * account cannot call is how the Groq outage happened in the first place.
+ *
+ * Buying credits unlocks the stronger models without a deploy: set
+ * AI_MODEL_WRITE=anthropic/claude-sonnet-4.6 (or ANALYSE/CLASSIFY) and the
+ * override below picks it up.
+ *
  * Classification is structured extraction that a small model handles well, so
  * a frontier model there is waste. Copy a business owner will actually read is
  * worth the stronger one.
  */
 const MODELS: Record<RouterTask, { primary: string; fallbacks: string[] }> = {
   classify: {
-    primary: 'openai/gpt-oss-120b',
-    fallbacks: ['anthropic/claude-haiku-4.5', 'openai/gpt-5.4'],
+    primary: 'openai/gpt-oss-20b',
+    fallbacks: ['openai/gpt-oss-120b'],
   },
   analyse: {
-    primary: 'anthropic/claude-sonnet-4.6',
-    fallbacks: ['openai/gpt-5.4', 'openai/gpt-oss-120b'],
+    primary: 'openai/gpt-oss-120b',
+    fallbacks: ['openai/gpt-oss-20b'],
   },
   write: {
-    primary: 'anthropic/claude-sonnet-4.6',
-    fallbacks: ['openai/gpt-5.4', 'anthropic/claude-haiku-4.5'],
+    primary: 'openai/gpt-oss-120b',
+    fallbacks: ['openai/gpt-oss-20b'],
   },
 };
 
