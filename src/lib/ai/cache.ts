@@ -188,6 +188,9 @@ export async function recordUsage(record: UsageRecord): Promise<void> {
  */
 export const MODEL_PRICING: Record<string, { input: number; output: number }> = {
   'openai/gpt-oss-120b': { input: 0.15, output: 0.6 },
+  'claude-opus-5': { input: 5, output: 25 },
+  'claude-sonnet-5': { input: 3, output: 15 },
+  'anthropic/claude-sonnet-4.6': { input: 3, output: 15 },
   'openai/gpt-oss-20b': { input: 0.075, output: 0.3 },
   // Retired by Groq — retained so historical usage records still price.
   'llama-3.3-70b-versatile': { input: 0.59, output: 0.79 },

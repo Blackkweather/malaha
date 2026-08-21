@@ -136,7 +136,7 @@ export const config = {
     },
     claude: {
       apiKey: str('ANTHROPIC_API_KEY', ''),
-      model: str('ANTHROPIC_MODEL', 'claude-sonnet-4-5'),
+      model: str('ANTHROPIC_MODEL', 'claude-opus-5'),
       maxCandidates: num('CLAUDE_MAX_CANDIDATES', 30),
       promptVersion: 2,
     },

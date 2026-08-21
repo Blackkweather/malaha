@@ -34,7 +34,7 @@ describe('AI cache keys', () => {
   });
 
   it('estimates cost from published per-million prices', () => {
-    const model = 'claude-sonnet-4-5';
+    const model = 'claude-opus-5';
     const pricing = MODEL_PRICING[model];
     expect(estimateCost(model, 1000000, 1000000)).toBeCloseTo(pricing.input + pricing.output, 5);
     expect(estimateCost('unknown-model', 100, 100)).toBeNull();

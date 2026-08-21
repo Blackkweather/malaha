@@ -6,6 +6,7 @@ import { getBusinessDetail } from '../repo/businesses';
 import { scoreBusiness } from '../pipeline/score';
 import { refreshSearchIndex } from '../pipeline/searchIndex';
 import { runWebsiteJob } from '../pipeline/websiteJob';
+import { analyseDeepFree } from './deepPass';
 import { analyseWithClaude, type ClaudeAnalysis } from './claude';
 import { analyseWithGroq, type GroqAnalysis } from './groq';
 import type { EvidencePackage } from './prompts';
@@ -176,10 +177,6 @@ export async function deepAnalyze(businessId: string): Promise<DeepAnalyzeResult
 
   // 6. Escalate to Claude only when the prospect justifies the cost.
   await track('claude_analysis', async () => {
-    if (!claudeEnabled()) {
-      return { status: 'skipped' as const, detail: 'ANTHROPIC_API_KEY is not configured' };
-    }
-
     const opportunity = result.opportunity ?? 0;
     if (opportunity < config.search.minOpportunityScore) {
       return {
@@ -194,8 +191,17 @@ export async function deepAnalyze(businessId: string): Promise<DeepAnalyzeResult
       };
     }
 
-    const call = await analyseWithClaude(businessId, evidence, groq ?? null);
-    if (!call) return { status: 'skipped' as const, detail: 'Claude is not enabled' };
+    /*
+     * Anthropic when a key is present, otherwise the same prompt on the best
+     * free model the router can reach. The brief is what matters downstream,
+     * not which vendor produced it.
+     */
+    const call = claudeEnabled()
+      ? await analyseWithClaude(businessId, evidence, groq ?? null)
+      : await analyseDeepFree(businessId, evidence, groq ?? null);
+    if (!call) {
+      return { status: 'skipped' as const, detail: 'No analysis provider is configured' };
+    }
     result.claude = { output: call.output, cacheHit: call.cacheHit, model: call.model };
     return {
       status: 'ok' as const,

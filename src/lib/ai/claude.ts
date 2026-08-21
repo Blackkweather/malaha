@@ -135,7 +135,9 @@ export async function analyseWithClaude(
       body: JSON.stringify({
         model,
         max_tokens: 3000,
-        temperature: 0.3,
+        // No temperature/top_p/top_k: sampling parameters are removed on
+        // current models and return a 400. Steer with the prompt instead.
+        thinking: { type: 'adaptive' },
         system: CLAUDE_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: buildClaudePrompt(compact, groqAnalysis) }],
       }),
