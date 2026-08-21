@@ -233,6 +233,49 @@ lock them down.
 
 ---
 
+## One click per prospect
+
+`POST /api/prospects/{id}/prepare` runs the whole approach in the order the
+data requires: audit the site, analyse it, build the concept, then draft the
+message that cites what the audit just found. On the prospect page it is one
+button, and it returns every step with status, detail and duration.
+
+The order is not cosmetic. Drafting before auditing produces a message that
+can cite nothing; building a concept before analysing loses the positioning
+the model inferred. That sequence used to live in whoever remembered it.
+
+It runs inline rather than through the job queue -- a person is waiting on the
+result and wants to read it, and the chain takes a few seconds. The queue
+stays the right tool for bulk work across many businesses.
+
+Steps are shown rather than hidden. A skipped AI step, or a site that would
+not respond, changes how much the output is worth, and whoever is about to
+send the message needs to know which happened.
+
+## Model routing
+
+AI calls route through **Vercel AI Gateway** when `AI_GATEWAY_API_KEY` is set:
+one credential reaches the whole model catalogue, switching model is a string
+change, and the gateway fails over between providers.
+
+This exists because the opposite failed in production. The app called Groq
+directly with one hard-coded model id, Groq retired that model, and every AI
+feature started returning 404. One provider with one model is a single point
+of failure.
+
+Three levels, each a loss of polish but never of availability:
+
+```
+AI Gateway  ->  direct Groq  ->  deterministic templates
+```
+
+`GET /api/health` reports which credential is present and which model each
+task resolves to, because a gateway silently falling back to the direct
+provider is otherwise invisible.
+
+Free gateway credits only serve the `gpt-oss` models. Buying credits unlocks
+the rest with no redeploy: set `AI_MODEL_WRITE=anthropic/claude-sonnet-4.6`.
+
 ## Outreach
 
 A ranked list is not a client. Each prospect can be turned into a draft —

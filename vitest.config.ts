@@ -35,6 +35,16 @@ export default defineConfig({
     poolOptions: { forks: { singleFork: true } },
     env: {
       DATABASE_URL: TEST_DATABASE_URL,
+      /*
+       * The suite runs in a single fork, so tests never contend for a
+       * connection with each other -- a large pool buys nothing and simply
+       * multiplies open connections against the server ceiling. Against a
+       * hosted Postgres that showed up as 60s hook timeouts on a different
+       * test each run, which reads like flakiness but is connection
+       * exhaustion. A small pool and a patient connect timeout fix it.
+       */
+      PGPOOL_MAX: '4',
+      PGPOOL_CONNECTION_TIMEOUT_MS: '20000',
       GROQ_API_KEY: '',
       ANTHROPIC_API_KEY: '',
       GOOGLE_PLACES_API_KEY: '',
