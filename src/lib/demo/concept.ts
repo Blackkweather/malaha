@@ -686,14 +686,15 @@ export function buildConcept(detail: BusinessDetail, claude: ClaudeAnalysis | nu
   }
 
   const bookingAvailable = !['retail', 'grocery', 'cafe_bar'].includes(category.key);
-  const claudeCta = claude?.recommendedPrimaryCta?.trim();
-  const primaryCtaLabel = claudeCta
-    ? claudeCta.slice(0, 40)
-    : bookingAvailable
-      ? 'Pedir cita'
-      : 'Pedir presupuesto';
+  /*
+   * The analysis pass writes in English, so its positioning line and CTA are
+   * unusable as page copy: they produced an English h1 truncated mid-word
+   * ('...whitenin') and a 'Book a Free Consultation' button on a Spanish
+   * page. The Spanish generator owns visible copy; the analysis informs the
+   * brief the agency reads, not the mock-up the client sees.
+   */
+  const primaryCtaLabel = bookingAvailable ? 'Pedir cita' : 'Pedir presupuesto';
 
-  const positioning = claude?.businessPositioning?.split('.')[0]?.trim();
 
   // WhatsApp is the dominant contact channel for Spanish local business, so a
   // concept without it is not showing the business its real best case.
@@ -702,7 +703,7 @@ export function buildConcept(detail: BusinessDetail, claude: ClaudeAnalysis | nu
   return {
     businessName: detail.business.name,
     monogram: monogramFor(detail.business.name),
-    tagline: positioning ? positioning.slice(0, 110) : headlineFor(category.key, city),
+    tagline: headlineFor(category.key, city),
     intro:
       detail.business.description?.slice(0, 300) ??
       `${detail.business.name} atiende en ${city}. Este concepto muestra cómo podría presentarse el negocio online: servicios claros, pruebas visibles y una vía de contacto que funciona desde el móvil.`,

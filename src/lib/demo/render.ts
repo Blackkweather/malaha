@@ -288,6 +288,37 @@ export function renderStyles(accent: string, theme?: DemoTheme): string {
     a.plain { color: var(--accent); text-decoration: none; font-weight: 500; }
     a.plain:hover { text-decoration: underline; }
 
+    /* ---- imagery --------------------------------------------------------- */
+    /*
+     * Photographs come from the business own website, so their dimensions are
+     * unknown. Fixed aspect ratios with object-fit keep the layout intact
+     * whatever shape arrives, and a tinted surface sits behind every frame so
+     * a slow or dead image never leaves a hole.
+     */
+    .shot { position: relative; overflow: hidden; border-radius: 3px; background: var(--surface-2); border: 1px solid var(--border); }
+    .shot img { display: block; width: 100%; height: 100%; object-fit: cover; }
+    .shot-hero { aspect-ratio: 5 / 4; box-shadow: var(--shadow); }
+    .shot-wide { aspect-ratio: 21 / 9; }
+    .shot-tile { aspect-ratio: 1 / 1; border-radius: 3px; }
+    .gallery { display: grid; gap: 14px; grid-template-columns: repeat(2, 1fr); }
+    .logo-chip { height: 30px; width: auto; max-width: 132px; object-fit: contain; }
+
+    .hero-editorial { text-align: left; max-width: 68ch; }
+    .hero-editorial h1 { font-size: clamp(2.6rem, 7vw, 4.6rem); }
+
+    .hero-showcase { position: relative; border-radius: 4px; overflow: hidden; min-height: 460px; display: flex; align-items: flex-end; border: 1px solid var(--border); }
+    .hero-showcase .shot-bg { position: absolute; inset: 0; }
+    .hero-showcase .shot-bg img { width: 100%; height: 100%; object-fit: cover; }
+    .hero-showcase .veil { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.15) 0%, rgba(0,0,0,.55) 55%, rgba(0,0,0,.82) 100%); }
+    .hero-showcase .showcase-copy { position: relative; padding: 40px 32px; color: #fff; }
+    .hero-showcase .showcase-copy h1 { color: #fff; }
+    .hero-showcase .showcase-copy .lede { color: rgba(255,255,255,.9); }
+
+    @media (min-width: 760px) {
+      .gallery { grid-template-columns: repeat(4, 1fr); }
+      .hero-showcase .showcase-copy { padding: 56px 48px; max-width: 42rem; }
+    }
+
     footer { padding: 48px 0; border-top: 1px solid var(--border); color: var(--muted); font-size: .85rem; }
     .notice {
       margin-top: 18px; padding: 13px 17px; border-radius: 11px;
