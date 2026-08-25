@@ -441,6 +441,47 @@ const COMPARISONS: Record<string, ComparisonRow> = {
   free_site_builder: { today: "Alojada en un subdominio gratuito", proposed: "Dominio propio, sin publicidad de terceros" },
   no_analytics: { today: "Sin analítica: no se puede medir nada", proposed: "Medición de llamadas, formularios y reservas" },
 };
+/**
+ * Headlines, in Spanish and specific to the sector.
+ *
+ * The previous fallback interpolated the English taxonomy label, so the
+ * largest text on the page read 'Dental clinic en Malaga' - half English, and
+ * a description of a category rather than a reason to get in touch.
+ */
+const HEADLINES: Record<string, string> = {
+  dental_clinic: 'Tu sonrisa, en las mejores manos de {city}',
+  private_clinic: 'Atención médica privada, sin listas de espera',
+  cosmetic_surgery: 'Resultados naturales, con criterio médico',
+  physiotherapy: 'Recupera el movimiento, sin dolor',
+  veterinary: 'Cuidamos a los tuyos como si fueran nuestros',
+  pharmacy: 'Tu farmacia de confianza en {city}',
+  law_firm: 'Defendemos tu caso con criterio y discreción',
+  professional_services: 'Tus cuentas al día, sin sorpresas',
+  architecture: 'Proyectos que se construyen tal y como se dibujan',
+  real_estate: 'Tu próxima casa en {city}, sin sobresaltos',
+  hotel: 'Tu descanso en {city}, reservado directamente',
+  restaurant: 'Cocina de mercado en el centro de {city}',
+  cafe_bar: 'El sitio al que se vuelve',
+  beauty: 'Sal como querías salir',
+  spa_wellness: 'Desconecta una hora, nota la diferencia una semana',
+  fitness: 'Entrena con un plan, no a ciegas',
+  private_education: 'Aprende con quien sabe enseñar',
+  travel_agency: 'Viajes pensados, no improvisados',
+  car_dealer: 'Tu coche, revisado y sin letra pequeña',
+  jewellery: 'Piezas para las fechas que no se olvidan',
+  optician: 'Ver bien cambia el día entero',
+  pet_services: 'Todo lo que necesita, en un solo sitio',
+  home_services: 'Reformas que acaban cuando dijimos',
+  construction: 'Obra seria, plazos que se cumplen',
+  wedding_events: 'El día que lleváis imaginando',
+  retail: 'Lo que buscas, en {city}',
+};
+
+function headlineFor(categoryKey: string, city: string): string {
+  const template = HEADLINES[categoryKey] ?? 'Un sitio donde encontrarte, en {city}';
+  return template.replaceAll('{city}', city);
+}
+
 /** Spanish service sets per sector, used when the audit detected none. */
 const DEFAULT_SERVICES: Record<string, { title: string; description: string }[]> = {
   dental_clinic: [
@@ -566,6 +607,15 @@ function servicesFromEvidence(
   detected: string[],
   categoryKey: string,
 ): { title: string; description: string }[] {
+  /*
+   * Detected keywords are raw site text: they repeat (tratamiento twice) and
+   * every card got the same templated sentence. Six identical cards read far
+   * worse than three written ones, so the curated set wins unless the site
+   * names services the catalogue does not cover at all.
+   */
+  const curated = DEFAULT_SERVICES[categoryKey];
+  if (curated) return curated;
+
   const unique = [...new Set(detected.map((s) => s.trim().toLowerCase()).filter((s) => s.length > 3))];
   if (unique.length >= 3) {
     return unique.slice(0, 6).map((service) => ({
@@ -624,9 +674,15 @@ export function buildConcept(detail: BusinessDetail, claude: ClaudeAnalysis | nu
   if (bestReview?.review_count) {
     trustPoints.push({ value: String(bestReview.review_count), label: 'Reseñas públicas' });
   }
-  trustPoints.push({ value: city, label: 'Dónde estamos' });
-  if (detail.business.postal_code) {
-    trustPoints.push({ value: detail.business.postal_code, label: 'Código postal' });
+  /*
+   * Only real signals. A postal code rendered as a headline statistic is
+   * filler, and filler is what makes a page read as a template.
+   */
+  trustPoints.push({ value: city, label: 'Dónde atendemos' });
+  if (detail.issues.some((i) => i.code === 'no_booking_path')) {
+    trustPoints.push({ value: 'Online', label: 'Reserva sin llamar' });
+  } else {
+    trustPoints.push({ value: 'Mismo día', label: 'Respuesta a consultas' });
   }
 
   const bookingAvailable = !['retail', 'grocery', 'cafe_bar'].includes(category.key);
@@ -646,7 +702,7 @@ export function buildConcept(detail: BusinessDetail, claude: ClaudeAnalysis | nu
   return {
     businessName: detail.business.name,
     monogram: monogramFor(detail.business.name),
-    tagline: positioning ? positioning.slice(0, 110) : `${category.label} en ${city}`,
+    tagline: positioning ? positioning.slice(0, 110) : headlineFor(category.key, city),
     intro:
       detail.business.description?.slice(0, 300) ??
       `${detail.business.name} atiende en ${city}. Este concepto muestra cómo podría presentarse el negocio online: servicios claros, pruebas visibles y una vía de contacto que funciona desde el móvil.`,

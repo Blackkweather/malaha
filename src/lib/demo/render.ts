@@ -121,7 +121,7 @@ export function renderStyles(accent: string, theme?: DemoTheme): string {
     .btn-wa { background: #25d366; color: #05240f; }
 
     /* ---- hero ------------------------------------------------------------ */
-    .hero { position: relative; overflow: hidden; padding: clamp(84px, 12vw, 150px) 0 clamp(72px, 10vw, 120px); }
+    .hero { position: relative; overflow: hidden; padding: clamp(56px, 7vw, 92px) 0 clamp(48px, 6vw, 76px); }
     .hero::before {
       content: ""; position: absolute; inset: -40% -20% auto -20%; height: 130%; z-index: -1;
       background:
@@ -136,7 +136,7 @@ export function renderStyles(accent: string, theme?: DemoTheme): string {
     }
     .eyebrow::before { content: ""; width: 26px; height: 1px; background: var(--accent); }
     h1 { font-size: clamp(2.7rem, 8vw, 5.6rem); line-height: .96; margin: 30px 0 26px; font-weight: 600; letter-spacing: -.035em; }
-    .lede { color: var(--muted); font-size: clamp(1.02rem, 2.2vw, 1.18rem); max-width: 60ch; }
+    .lede { color: var(--muted); font-size: clamp(1.08rem, 2.2vw, 1.3rem); max-width: 56ch; line-height: 1.55; }
     .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
     .hero-meta { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 30px; color: var(--muted); font-size: .88rem; }
     .hero-meta strong { color: var(--text); font-weight: 650; }
@@ -162,13 +162,13 @@ export function renderStyles(accent: string, theme?: DemoTheme): string {
     /* ---- sections -------------------------------------------------------- */
     /* Whitespace does most of the work: sections breathe, and the border is
        a hairline rather than a box. */
-    section { padding: clamp(72px, 11vw, 132px) 0; border-top: 1px solid var(--border); }
-    .section-head { max-width: 62ch; margin-bottom: clamp(34px, 5vw, 56px); }
+    section { padding: clamp(48px, 6vw, 84px) 0; border-top: 1px solid var(--border); }
+    .section-head { max-width: 62ch; margin-bottom: clamp(24px, 3vw, 34px); }
     h2 { font-size: clamp(1.9rem, 4.6vw, 3.1rem); margin-bottom: 16px; font-weight: 600; line-height: 1.04; letter-spacing: -.03em; }
     .section-sub { color: var(--muted); font-size: clamp(1rem, 1.6vw, 1.1rem); }
     .section-index {
       display: block; font-family: var(--mono); font-size: .72rem; font-weight: 500;
-      letter-spacing: .16em; color: var(--muted); margin-bottom: 18px;
+      letter-spacing: .16em; color: var(--accent); margin-bottom: 18px;
       padding-bottom: 14px; border-bottom: 1px solid var(--border);
     }
 
@@ -243,7 +243,7 @@ export function renderStyles(accent: string, theme?: DemoTheme): string {
     .card:hover { opacity: .72; }
     .card h3 { font-weight: 600; }
     .card h3 { font-size: 1.08rem; margin-bottom: 9px; }
-    .card p { color: var(--muted); font-size: .95rem; }
+    .card p { color: var(--muted); font-size: 1rem; line-height: 1.6; }
     /* A quiet numeral, not a coloured chip. */
     .card-icon {
       font-family: var(--mono); font-size: .74rem; letter-spacing: .12em; color: var(--muted);
@@ -288,55 +288,6 @@ export function renderStyles(accent: string, theme?: DemoTheme): string {
     a.plain { color: var(--accent); text-decoration: none; font-weight: 500; }
     a.plain:hover { text-decoration: underline; }
 
-    .map {
-      margin-top: 18px; border-radius: 3px; border: 1px solid var(--border); overflow: hidden;
-      background:
-        linear-gradient(color-mix(in srgb, var(--accent) 7%, transparent), color-mix(in srgb, var(--accent) 7%, transparent)),
-        repeating-linear-gradient(0deg, var(--surface-2) 0 1px, transparent 1px 34px),
-        repeating-linear-gradient(90deg, var(--surface-2) 0 1px, transparent 1px 34px);
-      background-color: var(--surface); height: 190px; position: relative;
-    }
-    .pin {
-      position: absolute; left: 50%; top: 50%; transform: translate(-50%, -100%);
-      width: 26px; height: 26px; border-radius: 999px 999px 999px 2px; rotate: -45deg;
-      background: var(--accent); box-shadow: var(--shadow);
-    }
-
-    /* ---- imagery --------------------------------------------------------- */
-    /*
-     * Photographs come from the business's own website, so their dimensions
-     * are unknown and arbitrary. Fixed aspect ratios with object-fit keep the
-     * layout intact whatever shape arrives, and a tinted surface sits behind
-     * every frame so a slow or dead image never leaves a white hole.
-     */
-    .shot { position: relative; overflow: hidden; border-radius: 3px; background: var(--surface-2); border: 1px solid var(--border); }
-    .shot img { display: block; width: 100%; height: 100%; object-fit: cover; }
-    .shot-hero { aspect-ratio: 4 / 3; box-shadow: var(--shadow); }
-    .shot-wide { aspect-ratio: 21 / 9; }
-    .shot-tile { aspect-ratio: 1 / 1; border-radius: 3px; }
-    .gallery { display: grid; gap: 14px; grid-template-columns: repeat(2, 1fr); }
-    .logo-chip { height: 30px; width: auto; max-width: 132px; object-fit: contain; }
-
-    /* Editorial hero: type carries the page, one wide plate beneath it. */
-    .hero-editorial { text-align: left; max-width: 68ch; }
-    .hero-editorial h1 { font-size: clamp(2.6rem, 7vw, 4.6rem); }
-
-    /* Showcase hero: the photograph leads and the copy sits over it. */
-    .hero-showcase { position: relative; border-radius: 4px; overflow: hidden; min-height: 460px; display: flex; align-items: flex-end; border: 1px solid var(--border); }
-    .hero-showcase .shot-bg { position: absolute; inset: 0; }
-    .hero-showcase .shot-bg img { width: 100%; height: 100%; object-fit: cover; }
-    .hero-showcase .veil { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.15) 0%, rgba(0,0,0,.55) 55%, rgba(0,0,0,.82) 100%); }
-    .hero-showcase .showcase-copy { position: relative; padding: 40px 32px; color: #fff; }
-    .hero-showcase .showcase-copy h1 { color: #fff; }
-    .hero-showcase .showcase-copy .lede { color: rgba(255,255,255,.9); }
-    .hero-showcase .showcase-copy .hero-meta { color: rgba(255,255,255,.82); }
-    .hero-showcase .showcase-copy .hero-meta strong { color: #fff; }
-
-    @media (min-width: 760px) {
-      .gallery { grid-template-columns: repeat(4, 1fr); }
-      .hero-showcase .showcase-copy { padding: 56px 48px; max-width: 42rem; }
-    }
-
     footer { padding: 48px 0; border-top: 1px solid var(--border); color: var(--muted); font-size: .85rem; }
     .notice {
       margin-top: 18px; padding: 13px 17px; border-radius: 11px;
@@ -356,7 +307,7 @@ export function renderStyles(accent: string, theme?: DemoTheme): string {
       .steps { grid-template-columns: repeat(3, 1fr); }
       .stats { grid-template-columns: repeat(4, 1fr); }
       .contact-grid { grid-template-columns: 1.15fr .85fr; }
-      .hero-grid { grid-template-columns: 1.25fr .75fr; }
+      .hero-grid { grid-template-columns: 1.05fr .95fr; }
       .nav-links { display: flex; }
       .sticky-cta { display: none; }
       body { padding-bottom: 0; }
@@ -415,12 +366,15 @@ function starsFor(rating: number): string {
 function renderReviews(concept: DemoConcept): string {
   const withData = concept.reviews.filter((r) => r.rating !== null || r.count !== null);
 
-  // The section is always present so the page structure is stable; with no
-  // public rating it says so rather than inventing praise.
-  const body =
-    withData.length === 0
-      ? `<div class="card"><h3>Aún sin reseñas públicas</h3><p>Cuando las haya, este espacio las mostrará automáticamente. Pedir reseña tras cada visita es la vía más rápida para llenarlo.</p></div>`
-      : withData
+  /*
+   * With no public rating the section is omitted entirely. Announcing "aun sin
+   * resenas" on a page whose job is to win the client is an own goal, and the
+   * honesty requirement is met by not claiming a rating - not by volunteering
+   * the absence of one.
+   */
+  if (withData.length === 0) return '';
+
+  const body = withData
           .map((review) => {
             const rating =
               review.rating === null
@@ -489,7 +443,6 @@ function renderLocation(concept: DemoConcept): string {
         <h3>${escapeHtml(concept.businessName)}</h3>
         <p>${escapeHtml(address)}</p>
         ${mapLink}
-        <div class="map" role="img" aria-label="Mapa esquemático de la ubicación"><span class="pin"></span></div>
       </div>
     </div>
   </section>`;
