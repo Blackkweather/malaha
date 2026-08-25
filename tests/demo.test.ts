@@ -52,7 +52,9 @@ describe('demo generation', () => {
 
     const concept = buildConcept(detail!, null);
     expect(concept.businessName).toContain('Clinica Dental Fixture Uno');
-    expect(concept.categoryLabel).toBe('Dental clinic');
+    // The label is printed on a Spanish page, so it is the Spanish sector
+    // name — not the English taxonomy key this once asserted.
+    expect(concept.categoryLabel).toBe('Clínica dental');
     expect(concept.services.length).toBeGreaterThanOrEqual(3);
     expect(concept.trustPoints.length).toBeGreaterThan(0);
     expect(concept.contact.phone).toBeTruthy();
